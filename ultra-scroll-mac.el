@@ -37,7 +37,7 @@
 
 ;;; Code:
 ;;;; Requires
-(require 'mac-win nil 'noerror)
+;;(require 'mac-win nil 'noerror)
 (require 'pixel-scroll)
 (require 'mwheel)
 (require 'timer)
@@ -158,11 +158,11 @@ non-nil, temporarily lift the garbage collection percentage to
 avoid GC's during scroll."
   (interactive "e")
   (let ((ev-type (event-basic-type event))
-	(plist (nth 3 event)))
+	(plist (nth 1 event)))
     (if (not (memq ev-type '(wheel-up wheel-down)))
 	(when (memq ev-type '(wheel-left wheel-right))
 	  (if mouse-wheel-tilt-scroll
-	      (mac-forward-wheel-event t 'mwheel-scroll event arg)
+	      ;; (mac-forward-wheel-event t 'mwheel-scroll event arg)
 	    (when (and ;; "Swipe between pages" enabled.
 		   (plist-get plist :swipe-tracking-from-scroll-events-enabled-p)
 		   (eq (plist-get plist :momentum-phase) 'began))
@@ -185,8 +185,8 @@ avoid GC's during scroll."
 	      ultra-scroll-mac--gc-idle-timer
 	      (run-with-idle-timer ultra-scroll-mac-gc-idle-time nil
 				   #'ultra-scroll-mac--restore-gc)))
-      (let ((dy (plist-get plist :delta-y))
-	    (delta (plist-get plist :scrolling-delta-y))
+      (let ((dy 'nil)
+	    (delta (cdr (car (last event))))
 	    (window (mwheel-event-window event))
 	    ignore)
 	(if delta ; turn regular mouse wheel events into smooth scroll style
@@ -230,8 +230,8 @@ of `ultra-scroll-mode', which see."
   :keymap pixel-scroll-precision-mode-map ; reuse
   (cond
    (ultra-scroll-mac-mode
-    (unless (featurep 'mac-win)
-      (error "Precision Scroll Mac Mode works only with emacs-mac (not NS), you have:\n %s" (emacs-version)))
+    ;;(unless (featurep 'mac-win)
+    ;;  (error "Precision Scroll Mac Mode works only with emacs-mac (not NS), you have:\n %s" (emacs-version)))
     (unless (> scroll-conservatively 0)
       (warn "ultra-scroll-mac: scroll-conservatively > 0 is required for smooth scrolling of large images; 101 recommended"))
     (unless (= scroll-margin 0)
