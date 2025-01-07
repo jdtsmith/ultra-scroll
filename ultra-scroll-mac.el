@@ -178,8 +178,7 @@ avoid GC's during scroll."
 		    unread-command-events))))
       ;;  Wheel events: smooth scrolling
       (when (and ultra-scroll-mac-gc-percentage
-		 (not ultra-scroll-mac--gc-idle-timer)
-		 (eq (plist-get plist :phase) 'began))
+		 (not ultra-scroll-mac--gc-idle-timer))
 	(setq gc-cons-percentage 	; reduce GC's during scroll
 	      (max gc-cons-percentage ultra-scroll-mac-gc-percentage)
 	      ultra-scroll-mac--gc-idle-timer
