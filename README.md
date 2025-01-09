@@ -7,7 +7,7 @@ highly optimized, pixel-precise smooth scrolling which can readily keep
 up with the *very* high event rates of modern track-pads and
 high-precision wheel mice.
 
-You move your fingers, the page responds, instantly:
+You move your fingers, the page responds, *instantly*:
 
 <https://github-production-user-asset-6210df.s3.amazonaws.com/93749/290018933-ed5cf414-eab5-4ba8-b077-30cac0c5ace0.mov>
 
@@ -34,12 +34,14 @@ even with dumb third party mice.
 
 ## Compatibility, Installation, and Usage
 
-Not yet in a package archive.
+`ultra-scroll` should work across all systems that provide pixel
+scrolling information; see the `PIXEL-DELTA` field of `wheel-up/down`
+events.
 
 ### Installation
 
-For Emacs 29.1 and later, use `package-vc-install`. In the `*scratch*`
-buffer, enter
+Not yet in a package archive. For Emacs 29.1 and later, use
+`package-vc-install`. In the `*scratch*` buffer, enter
 
 ``` commonlisp
 (package-vc-install '(ultra-scroll :vc-backend Git :url  "https://github.com/jdtsmith/ultra-scroll"))
@@ -142,8 +144,8 @@ On the `emacs-mac` build, there is no comparison, because
 `pixel-scroll-precision-mode` doesn't work there. On other builds, they
 are fairly comparable. Compared to `pixel-scroll-precision-mode`,
 `ultra-scroll` obviously works with `emacs-mac`, but is also even
-[faster](#Speed), and can cleanly
-scroll past images taller than the window.
+[faster](#Speed), and can cleanly scroll past images taller than the
+window.
 
 In addition to fast scrolling, the built-in
 `pixel-scroll-precision-mode` (new in Emacs v29.1) can simulate a
@@ -151,7 +153,7 @@ In addition to fast scrolling, the built-in
 supply pixel scroll information. This comes complete with elisp-based
 scroll interpolation, a timer-based *momentum* phase, etc.
 
-### Why are there so many smooth scrolling modes? Why is this so hard, it's just *scrolling*?
+### Why are there so many smooth scrolling modes? Why is this so hard? It's just *scrolling/*…
 
 Emacs was designed long before mice were common, not to mention modern
 high-resolution track-pads which send rapid micro-updates ("move up one

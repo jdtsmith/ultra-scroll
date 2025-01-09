@@ -1,8 +1,8 @@
-* ultra-scroll: scroll emacs like lightning ⚡🖱️
+* ultra-scroll: scroll emacs like lightning ⚡🖱️⚡
 
 ~ultra-scroll~[fn:1] is a smooth-scrolling package for emacs, with native support for standard builds as well as [[https://bitbucket.org/mituharu/emacs-mac][emacs-mac]].  It provides highly optimized, pixel-precise smooth scrolling which can readily keep up with the /very/ high event rates of modern track-pads and high-precision wheel mice.
 
-You move your fingers, the page responds, instantly:
+You move your fingers, the page responds, /instantly/:
 
 [[https://github-production-user-asset-6210df.s3.amazonaws.com/93749/290018933-ed5cf414-eab5-4ba8-b077-30cac0c5ace0.mov]]
 
@@ -21,11 +21,11 @@ Importantly, ~ultra-scroll~ can cleanly /scroll right across/ tall images and ot
 
 ** Compatibility, Installation, and Usage
 
-Not yet in a package archive.
+~ultra-scroll~ should work across all systems that provide pixel scrolling information; see the ~PIXEL-DELTA~ field of ~wheel-up/down~ events.  
 
 *** Installation
 
-For Emacs 29.1 and later, use ~package-vc-install~.  In the ~*scratch*~ buffer, enter
+Not yet in a package archive.  For Emacs 29.1 and later, use ~package-vc-install~.  In the ~*scratch*~ buffer, enter
 
 #+begin_src emacs-lisp
   (package-vc-install '(ultra-scroll :vc-backend Git :url  "https://github.com/jdtsmith/ultra-scroll"))
@@ -47,7 +47,7 @@ move to the final paren, and =C-x C-e=.  Installation is then simple:
 Just start scrolling :).
 
 #+begin_tip
-For best performance, use a build with native-compilation (see [[id:E5E845A0-E4EE-4F73-9840-C98040007537][Speed]]).
+For best performance, use a build with native-compilation (see [[#Speed][Speed]]).
 #+end_tip
 
 ** Configuration
@@ -82,11 +82,11 @@ This packaged used to be called ~ultra-scroll-mac~.  The ~emacs-mac~ port of ema
   
 *** How does this compare to the built-in smooth scrolling?
 
-On the ~emacs-mac~ build, there is no comparison, because ~pixel-scroll-precision-mode~ doesn't work there.  On other builds, they are fairly comparable.  Compared to ~pixel-scroll-precision-mode~, ~ultra-scroll~ obviously works with ~emacs-mac~, but is also even [[id:E5E845A0-E4EE-4F73-9840-C98040007537][faster]], and can cleanly scroll past images taller than the window.
+On the ~emacs-mac~ build, there is no comparison, because ~pixel-scroll-precision-mode~ doesn't work there.  On other builds, they are fairly comparable.  Compared to ~pixel-scroll-precision-mode~, ~ultra-scroll~ obviously works with ~emacs-mac~, but is also even [[#Speed][faster]], and can cleanly scroll past images taller than the window.
 
 In addition to fast scrolling, the built-in ~pixel-scroll-precision-mode~ (new in Emacs v29.1) can simulate a /feature-complete track-pad driver/ in elisp for older mice which do not supply pixel scroll information.  This comes complete with elisp-based scroll interpolation, a timer-based /momentum/ phase, etc.
 
-*** Why are there so many smooth scrolling modes?  Why is this so hard, it's just /scrolling/?
+*** Why are there so many smooth scrolling modes?  Why is this so hard?  It's just /scrolling//...
 
 Emacs was designed long before mice were common, not to mention modern high-resolution track-pads which send rapid micro-updates ("move up one pixel!") more than 60 times per second.  Unlike other programs, Emacs insists on keeping the cursor (point) visible at all times.  Deep in its re-display code, Emacs tracks where point is, and works diligently to ensure it never falls outside the visible window.  It does this not by moving point (that's the user's job), but by moving the /window/ (visible range of lines) surrounding point.
 
