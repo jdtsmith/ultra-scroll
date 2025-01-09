@@ -53,21 +53,16 @@ scrolling information for your hardware; see the `PIXEL-DELTA` field of
 
 ### Installation
 
-Not yet in a package archive. For Emacs 29.1 and later, use
-`package-vc-install`. In the `*scratch*` buffer, enter
-
-``` commonlisp
-(package-vc-install '(ultra-scroll :vc-backend Git :url  "https://github.com/jdtsmith/ultra-scroll"))
-```
-
-move to the final paren, and `C-x C-e`. Installation is then simple:
-
+Not yet in a package archive. For Emacs 29.1 and later. Add the following snippet to your init file and evaluate to install:
 ``` commonlisp
 (use-package ultra-scroll
-  ;:load-path "~/code/emacs/ultra-scroll" ; if you git clone'd instead of package-vc-install
+  :ensure t
+  :vc (:url "https://github.com/jdtsmith/ultra-scroll"
+            :branch main)
+  :config
   :init
   (setq scroll-conservatively 101 ; important!
-        scroll-margin 0) 
+        scroll-margin 0)
   :config
   (ultra-scroll-mode 1))
 ```
@@ -162,7 +157,7 @@ is just… *painful*. Repeated attempts to rationalize this fail,
 especially because it's notably worse in one direction than the other.
 Scrolling Emacs feels like moving through (light) molasses. *No bueno*.
 
-Checking into it, the smooth scroll event callback takes 15-20ms
+Checking into it, the smooth scroll event callback takes 15-20msi
 scrolling in one direction, and 3–5x longer in the other. This
 performance is perfectly fine for normal mice which deliver a few
 scrolling events a second. *But track-pad scroll events are arriving
