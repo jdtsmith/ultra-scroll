@@ -157,7 +157,7 @@ is just… *painful*. Repeated attempts to rationalize this fail,
 especially because it's notably worse in one direction than the other.
 Scrolling Emacs feels like moving through (light) molasses. *No bueno*.
 
-Checking into it, the smooth scroll event callback takes 15-20msi
+Checking into it, the smooth scroll event callback takes 15-20ms
 scrolling in one direction, and 3–5x longer in the other. This
 performance is perfectly fine for normal mice which deliver a few
 scrolling events a second. *But track-pad scroll events are arriving
