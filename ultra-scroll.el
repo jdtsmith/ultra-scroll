@@ -94,19 +94,27 @@ directly, toggling them only if they are already active."
   :group 'scrolling)
 
 ;;;; Event callback/scroll
+
+;;  Wierdly, when a tall non-jumbo (shorter than window height) line
+;;  is present as the last entity in the buffer, this causes a jump of
+;;  an image in either direction. Same image with a shorter height
+;;  window works fine, or adding a newline at the end also fixes this.
+
 (defun ultra-scroll-down (delta)
-  "Scroll the current window down by DELTA pixels.
+  "Scroll the current window down towards buffer's end by DELTA pixels.
 DELTA should not be larger than the height of the current window."
   (let* ((initial (point))
 	 (edges (window-edges nil t nil t))
+	 (win-height (- (nth 3 edges) (nth 1 edges)))
 	 (current-vs (window-vscroll nil t))
 	 (off (+ (window-tab-line-height) (window-header-line-height)))
          (new-start (or (posn-point (posn-at-x-y 0 (+ delta off))) (window-start))))
     (goto-char new-start)
     (unless (zerop (window-hscroll))
       (setq new-start (beginning-of-visual-line)))
-    (if (>= (line-pixel-height) (- (nth 3 edges) (nth 1 edges)))
-	;; Jumbo line at top: just stay on it and increment vscroll
+    (if (>= (line-pixel-height) win-height)
+	;; Jumbo line at top: just stay on it, and increment vscroll
+	;; until it clears the top
 	(set-window-vscroll nil (+ current-vs delta) t t)
       (if (eq new-start (window-start))	; same start: just vscroll a bit more
 	  (setq delta (+ current-vs delta))
@@ -120,7 +128,7 @@ DELTA should not be larger than the height of the current window."
       (if (> initial (point)) (goto-char initial)))))
 
 (defun ultra-scroll-up (delta)
-  "Scroll the current window up by DELTA pixels.
+  "Scroll the current window up towards buffer's beginning by DELTA pixels.
 DELTA should be less than the window's height."
   (let* ((initial (point))
 	 (edges (window-edges nil t nil t))
@@ -130,14 +138,15 @@ DELTA should be less than the window's height."
 	 (start win-start))
     (if (<= delta current-vs)	    ; simple case: just reduce vscroll
 	(setq delta (- current-vs delta))
-      ; Not enough vscroll: measure size above window-start
-      (let* ((dims (window-text-pixel-size nil (cons start (- current-vs delta))
-					   start nil nil nil t))
-	     (pos (nth 2 dims))
-	     (height (nth 1 dims)))
-	(when (or (not pos) (eq pos (point-min)))
+					; Not enough vscroll: get size above window-start (+ half height pad)
+      (let* ((dims (window-text-pixel-size
+		    nil (cons start (- current-vs delta (/ win-height 2)))
+		    start nil nil nil t))
+	     (height (nth 1 dims))
+	     (pos (nth 2 dims)))
+	(when (or (not pos) (and (eq pos (point-min)) (= height 0)))
 	  (signal 'beginning-of-buffer nil))
-	(setq start (nth 2 dims)
+	(setq start pos
 	      delta (- (+ height current-vs) delta))) ; should be >= 0
       (unless (eq start win-start)
 	(set-window-start nil start (not (zerop delta)))))
@@ -146,11 +155,13 @@ DELTA should be less than the window's height."
     ;; Position point to avoid recentering, moving up one line from
     ;; the bottom, if necessary.  "Jumbo" lines (taller than the
     ;; window height, usually due to images) must be handled
-    ;; carefully.  Once they are within the window, point should stay
-    ;; on the first tall object on the line until the top of the jumbo
-    ;; line clears the top of the window, then immediately moved off
-    ;; (above), via the full height character.  The is the only way to
-    ;; avoid unwanted re-centering/motion trapping.
+    ;; carefully.  Once they are partially within the window, moving
+    ;; in from above, point should stay after the first tall object on
+    ;; the tall line until the top of the jumbo line just clears the
+    ;; top of the window, then immediately moved off (above), via the
+    ;; full height character.  This is the only way to avoid unwanted
+    ;; re-centering/motion trapping.
+    (goto-char (posn-point (posn-at-x-y 0 (1- win-height))))
     (if (> (line-pixel-height) win-height) ; a jumbo on the line!
 	(let ((end (max (point)
 			(save-excursion
@@ -159,12 +170,10 @@ DELTA should be less than the window's height."
 	  (when-let ((pv (pos-visible-in-window-p end nil t))
 		     ((and (> (length pv) 2) ; falls outside window
 			   (zerop (nth 2 pv))))) ; but not at the top
-	    (goto-char end) ; eol is usually full height
-	    (goto-char start))) ; now move up
-      (when-let ((p (posn-at-x-y 0 (1- win-height))))
-	(goto-char (posn-point p))
-	(vertical-motion -1)
-	(if (< initial (point)) (goto-char initial))))))
+	    (goto-char end)		; eol is usually full height
+	    (goto-char start)))		; now move up
+      (vertical-motion -1)
+      (if (< initial (point)) (goto-char initial)))))
 
 (defvar ultra-scroll--gc-percentage-orig nil)
 (defvar ultra-scroll--gc-timer nil)
