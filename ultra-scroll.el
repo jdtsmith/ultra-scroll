@@ -422,6 +422,8 @@ your system and hardware provide."
     (setf (get 'pixel-scroll-precision-use-momentum 'us-orig-value)
 	  pixel-scroll-precision-use-momentum)
     (setq pixel-scroll-precision-use-momentum nil)
+    ;; pixel-scroll-precision after emacs v30 turns this off, but we don't need to
+    (setq-default make-cursor-line-fully-visible t)
     (setq ultra-scroll--gc-percentage-orig gc-cons-percentage))
    (t
     (define-key pixel-scroll-precision-mode-map [remap pixel-scroll-precision] nil)
