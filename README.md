@@ -51,10 +51,11 @@ follow the directions. If it reports:
 - **Normal pixel scroll data**: you are good to go, everything is
   working.
 - **No real pixel scroll data**: your system and hardware are delivering
-  pixel scrolling data, but they *never change*. This is equivalent to
-  line-by-line scrolling. `ultra-scroll` will work fine for you, but
-  *without* any smooth scrolling. You can use it for the improved large
-  image scrolling behavior, or see below for another option.
+  pixel scrolling data, but they *never change* (test again to be sure).
+  This is equivalent to line-by-line scrolling. `ultra-scroll` will work
+  fine for you, but *without* any smooth scrolling. You can use it for
+  the improved large image scrolling behavior, or see below for another
+  option.
 - The *error* **Malformed wheel event**: your system does not deliver
   *any* pixel-level scroll data. Either upgrade your hardware/system to
   a known working config (see [this issue](../../issues/18) for user
@@ -69,7 +70,7 @@ interpolation) instead.
 > **Your Help Needed!** While `ultra-scroll` works out of the box for
 > most people, it's impossible to test all combinations of systems and
 > hardware, so please take a moment to [report your smooth-scrolling
-> experiences](../../issues/18) for the benefit of others.
+> experiences](../../discussions) for the benefit of others.
 
 ## Installation
 
