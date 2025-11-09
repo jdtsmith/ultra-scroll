@@ -125,7 +125,7 @@ directly, toggling them only if they are already active."
 			 #'ultra-scroll--hide-cursor-undo
 			 (window-buffer window))))
     (unless (or ultra-scroll--hide-cursor-undo-hook ; already hiding
-		(eq (window-point window) ; not yet at window edge
+		(eq (window-point window) ; not yet at window boundary
 		    ultra-scroll--hide-cursor-start))
       (push (if (local-variable-p 'cursor-type)
                 (let ((orig cursor-type))
@@ -269,9 +269,10 @@ DELTA should be less than the window's height."
   (let (ignore)
     (unless (or (zerop delta)
 		(and (setq ignore (window-parameter window 'ultra-scroll--ignore))
-		     (or (and (eq (point) (car ignore)) ; ignoring this window this direction
-			      (eq (cdr ignore) (< delta 0)))
-			 (set-window-parameter window 'ultra-scroll--ignore nil))))
+		     (or ; ignoring this window moving this direction
+		      (and (eq (point) (car ignore))
+			   (eq (cdr ignore) (< delta 0)))
+		      (set-window-parameter window 'ultra-scroll--ignore nil))))
       (with-selected-window window
 	(condition-case err
 	    (if (< delta 0)
