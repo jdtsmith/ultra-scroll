@@ -77,6 +77,12 @@ additional functions or modes specified in
   :type '(choice (const :value nil :tag "Disable") (float :tag "Time (s)"))
   :group 'scrolling)
 
+(defcustom ultra-scroll-preserve-column nil
+  "Restore the column position after scroll completes.
+Only takes effect if `ultra-scroll-hide-cursor' is non-nil."
+  :type 'boolean
+  :group 'scrolling)
+
 (defcustom ultra-scroll-hide-functions '(hl-line-mode)
   "Functions to call when scrolling begins and ends.
 This hook can also be used to specify modes to disable
@@ -113,6 +119,11 @@ directly, toggling them only if they are already active."
       (kill-local-variable 'ultra-scroll--hide-cursor-timer)
       (kill-local-variable 'ultra-scroll--hide-cursor-undo-hook))))
 
+(defun ultra-scroll--restore-column (_v)
+  "Attempt to restore the starting column position."
+  (when-let* ((uss (window-parameter nil 'ultra-scroll--start)))
+    (vertical-motion (cons (/ uss (frame-char-width)) 0))))
+
 (defun ultra-scroll--hide-cursor (window)
   "Hide cursor in WINDOW."
   (when ultra-scroll-hide-cursor
@@ -132,6 +143,9 @@ directly, toggling them only if they are already active."
                   (lambda (_v) (setq-local cursor-type orig)))
 	      (lambda (_v) (kill-local-variable 'cursor-type)))
             ultra-scroll--hide-cursor-undo-hook)
+      (when ultra-scroll-preserve-column
+	(push #'ultra-scroll--restore-column
+	      ultra-scroll--hide-cursor-undo-hook))
       (setq-local cursor-type nil)
       (run-hook-wrapped
        'ultra-scroll-hide-functions
@@ -160,6 +174,14 @@ directly, toggling them only if they are already active."
 See `ultra-scroll-gc-percentage' to configuring whether GC changes occur
 and the `gc-cons-percentage' level to set temporarily."
   (unless ultra-scroll--timer
+    (unless (and (window-parameter nil 'ultra-scroll--start)
+		 ;; preserve target for multiple consecutive scrolls commands
+		 (memq last-command '( ultra-scroll ultra-scroll-mac
+				       mac-mwheel-scroll pixel-scroll-precision)))
+      (set-window-parameter nil 'ultra-scroll--start
+			    (car (posn-x-y (posn-at-point))))
+      (message "updating starting x to: %s"
+	       (window-parameter nil 'ultra-scroll--start)))
     ;; Work around lag when same buffer has vscroll in another window (#32)
     (dolist (w (cdr (get-buffer-window-list (current-buffer))))
       (set-window-vscroll w 0))

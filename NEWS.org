@@ -2,6 +2,10 @@
 #+author: J.D. Smith
 #+language: en
 
+* DEVELOPMENT
+
+- Introduced ~ultra-scroll-preserve-column~.  If this option is enabled, ~ultra-scroll~ will try to preserve column position of point across scrolls.
+
 * v0.4.2 (2025-07-14)
 
 - Released on MELPA.
