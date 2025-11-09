@@ -175,13 +175,11 @@ See `ultra-scroll-gc-percentage' to configuring whether GC changes occur
 and the `gc-cons-percentage' level to set temporarily."
   (unless ultra-scroll--timer
     (unless (and (window-parameter nil 'ultra-scroll--start)
-		 ;; preserve target for multiple consecutive scrolls commands
+		 ;; preserve target for multiple consecutive scroll commands
 		 (memq last-command '( ultra-scroll ultra-scroll-mac
 				       mac-mwheel-scroll pixel-scroll-precision)))
       (set-window-parameter nil 'ultra-scroll--start
-			    (car (posn-x-y (posn-at-point))))
-      (message "updating starting x to: %s"
-	       (window-parameter nil 'ultra-scroll--start)))
+			    (car (posn-x-y (posn-at-point)))))
     ;; Work around lag when same buffer has vscroll in another window (#32)
     (dolist (w (cdr (get-buffer-window-list (current-buffer))))
       (set-window-vscroll w 0))
