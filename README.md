@@ -19,7 +19,8 @@ packages to date. As a bonus, it enables relatively smooth scrolling
 even with dumb third party mice.
 
 Note, the `previous-buffer` animation above is from two-finger track-pad
-swiping, and is an `emacs-mac` exclusive.
+swiping, and is an [emacs-mac](https://github.com/jdtsmith/emacs-mac)
+exclusive.
 
 > [!NOTE]
 > **Do you need this?**
@@ -34,8 +35,8 @@ swiping, and is an `emacs-mac` exclusive.
 > again with your browser – I bet it's *very* readable there. Shouldn't
 > emacs be like this?
 >
-> If you scroll buffers with tall images visible, this is also a good
-> reason to give `ultra-scroll` a try.
+> In addition, if you scroll buffers with tall images visible, this is
+> also a good reason to give `ultra-scroll` a try.
 
 ## Release Information
 
@@ -194,7 +195,8 @@ question](#how-does-this-compare-to-the-built-in-smooth-scrolling).
 emacs-mac's own builtin `mac-mwheel-scroll`  
 This venerable code was introduced with
 [emacs-mac](https://bitbucket.org/mituharu/emacs-mac/) more than a
-decade ago, and was the first to provide smooth scrolling in emacs.
+decade ago, and was the first to provide smooth scrolling in any version
+of emacs.
 
 `pixel-scroll-precision-mode`  
 A fast pixel scrolling by Po Lu, built in to Emacs as of v29.1 (see
@@ -256,9 +258,9 @@ window.
 
 In addition to fast scrolling, the built-in
 `pixel-scroll-precision-mode` (new in Emacs v29.1) can simulate a
-*feature-complete track-pad driver* in elisp for older mice which do not
-supply pixel scroll information. This comes complete with elisp-based
-scroll interpolation, a timer-based *momentum* phase, etc.
+*feature-complete track-pad driver* in elisp for older mice or systems
+which do not supply pixel scroll information. This comes complete with
+elisp-based *scroll interpolation*, a timer-based *momentum* phase, etc.
 
 ### Why are there so many smooth scrolling modes? Why is this so hard? It's just *scrolling*…
 
@@ -268,8 +270,8 @@ high-resolution track-pads and mice which send rapid micro-updates
 Emacs *insists* on keeping the cursor (point) visible at all times. Deep
 in its re-display code, Emacs tracks where point is, and works
 diligently to ensure it never falls outside the visible window. It does
-this not by moving point (that's the user's job), but by moving the
-*window* (visible range of lines) surrounding point.
+this *not* by moving point itself (that's the user's job), but by moving
+the *window* (visible range of lines) surrounding point.
 
 Once you are used to this behavior, it's actually pretty nice for
 navigating with `C-n` / `C-p` and friends. But for smooth scrolling with
@@ -343,13 +345,14 @@ across jumbo lines:
   tab-bar, but *not* the tab-bar-mode bar.
 - Jumbo lines (lines taller than the window's height):
   - Scrolling towards buffer end:
-    - When scrolling with jumbo lines towards the buffer's end (with
-      `vscroll`), simply keep *point on the jumbo line* until it fully
-      disappears from view. As a special case, Emacs will not re-center
+    - When scrolling past jumbo lines towards the buffer's end (with
+      `vscroll`), simply keep *point on the jumbo line* until it *fully
+      disappears* from view. As a special case, Emacs will not re-center
       when this happens.
     - This is *not* true for lines that are shorter than the usable
-      window height. In this case, you must *avoid* placing point on any
-      line which falls partially out of view.
+      window height (even if they are tall). In this case, you must
+      *avoid* placing point on any line which falls partially out of
+      view.
   - Scrolling towards buffer start:
     - When scrolling up past jumbo lines towards the buffer's start
       using `set-window-start` (lines of content move down), you must
@@ -380,19 +383,21 @@ buffers with diverse line heights (e.g. inline images). If you think you
 have found a display bug, open an issue to discuss.
 
 - A [display bug](https://debbugs.gnu.org/cgi/bugreport.cgi?bug=67533)
-  with inline images that cause them to misreport pixel measurements and
-  positions sometimes has been fixed in master as of Dec, 2023, so
-  scrolling with lots of inline images should be much smoother from v30.
+  with inline images that cause them to sometimes misreport pixel
+  measurements and positions has been fixed in master as of Dec, 2023,
+  so scrolling with lots of inline images should be much smoother
+  starting from Emacs v30.
 - As of June, 2025, another [display
   bug](https://debbugs.gnu.org/cgi/bugreport.cgi?bug=67604) related to
   line-skipping of visual (i.e. word) wrapped lines with inline images
   at line start has been fixed (for Emacs v31). This caused additional
-  "hitches" in smooth scrolling in buffers with numerous inline images.
+  (but even rarer) "hitches" in smooth scrolling in buffers with
+  numerous inline images.
 - Another display bug which leads to scrolling (and general UI) slowdown
-  in some situations with `make-cursor-line-fully-visible=t` was also
-  [found](../../issues/32) and
+  in some edge-case situations with `make-cursor-line-fully-visible=t`
+  was also [found](../../issues/32) and
   [fixed](https://debbugs.gnu.org/cgi/bugreport.cgi?bug=78766) in
-  June, 2025. Will be included with Emacs v31.
+  June, 2025. This fix will be included with Emacs v31.
 
 ## Speed
 
@@ -416,19 +421,19 @@ with various buffer and window sizes[^2].
     time, so that all the other emacs commands that occur when new
     content is brought into view (font-lock) can run without causing
     scroll lag, for all your different modes. **Faster is better**: 3ms
-    or less in a light buffer would be *ideal*.
+    or less[^3] in a light buffer would be *ideal*.
 4.  Building `--with-native-comp` is *essential* for ultra-smooth
-    scrolling. It increases the speed of each individual scroll commands
+    scrolling. It increases the speed of each individual scroll command
     by **\>3x**, which is important since these commands are called so
     frequently.
-5.  On the same build (NS, v29.4, with native-comp), `ultra-scroll` is
-    about **40% faster** than `pixel-scroll-precision-mode`. Except on
-    slower machines, or in very heavy buffers and/or on large window
-    sizes where your performance is right on the edge, this shouldn't be
-    too noticeable.
+5.  On the exact same build (NS, v29.4, with native-comp),
+    `ultra-scroll` is about **40% faster** than
+    `pixel-scroll-precision-mode`. Except on slower machines, or in very
+    heavy buffers and/or on large window sizes where your performance is
+    right on the edge, this shouldn't be too noticeable.
 6.  On the same system (an M2 mac), `ultra-scroll` on `emacs-mac` is
-    10-15% faster than on NS builds like `emacs-plus`. Very likely not
-    noticeable.
+    10-15% faster than it is on NS builds like `emacs-plus`. Very likely
+    not noticeable.
 7.  The mode-line gets updated *very often* during smooth scrolls (and
     in general), and poorly written fancy modeline add-ons are a common
     source of slow-down. Good modeline modes will *rate-limit* their
@@ -440,6 +445,14 @@ with various buffer and window sizes[^2].
 [^1]: Formerly `ultra-scroll-mac`.
 
 [^2]: To try this yourself, `M-x elp-instrument-function` on both
+    `ultra-scroll-up/down`, scroll around (both directions) in a big
+    buffer with a large window, then `M-x elp-results`. The last column
+    gives average time in seconds. Less than 0.003s (i.e. 3ms) is ideal,
+    8ms is still perfectly usable, 15ms you'll feel a bit, 50ms will be
+    very frustrating. `scroll-down` is always faster than `scroll-up`
+    due to an asymmetry in Emacs' `vscroll` buffer.
+
+[^3]: To try this yourself, `M-x elp-instrument-function` on both
     `ultra-scroll-up/down`, scroll around (both directions) in a big
     buffer with a large window, then `M-x elp-results`. The last column
     gives average time in seconds. Less than 0.003s (i.e. 3ms) is ideal,
