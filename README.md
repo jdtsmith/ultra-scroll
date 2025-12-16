@@ -125,7 +125,7 @@ temporarily increased, and reset during idle time. The defaults should
 work well for most situations, but if necessary, can be configured using
 `ultra-scroll-gc-percentage` and `ultra-scroll-gc-idle-time`.
 
-### Hiding cursor and disabling other modes during scroll
+### Hiding cursor, disabling other modes during scroll, and restoring column
 
 By default, `ultra-scroll` hides the cursor (and a `hl-line` if active)
 once it reaches the window edge, to prevent "bouncing cursor" behavior.
@@ -141,6 +141,9 @@ other modes during the scroll. The special hook variable
 ```
 
 By default, the hook contains `hl-line-mode`.
+
+You can optionally enable restoring the visual column position after the
+scroll completes; see `ultra-scroll-preserve-column`.
 
 ## `pixel-scroll-precision` comparison and interoperability
 

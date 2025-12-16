@@ -4,7 +4,7 @@
 ;; Author: J.D. Smith
 ;; URL: https://github.com/jdtsmith/ultra-scroll
 ;; Package-Requires: ((emacs "29.1"))
-;; Version: 0.4.2
+;; Version: 0.5.0
 ;; Keywords: convenience
 ;; Prefix: ultra-scroll
 ;; Separator: -
