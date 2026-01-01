@@ -59,8 +59,9 @@ follow the directions. If it reports:
   option.
 - The *error* **Malformed wheel event**: your system does not deliver
   *any* pixel-level scroll data. Either upgrade your hardware/system to
-  a known working config (see [this issue](../../issues/18) for user
-  experiences), or see below.
+  a known working config (see [this issue](../../issues/18) and the
+  [discussions](../../discussions) for user experiences). Or see below
+  for an alternative.
 
 For systems which do *not* provide normal pixel scroll data, you can try
 the built-in `pixel-scroll-precision-mode` with
@@ -71,7 +72,7 @@ interpolation) instead.
 > **Your Help Needed!** While `ultra-scroll` works out of the box for
 > most people, it's impossible to test all combinations of systems and
 > hardware, so please take a moment to [report your smooth-scrolling
-> experiences](../../discussions) for the benefit of others.
+> experiences](../../discussions).
 
 ## Installation
 
@@ -91,15 +92,15 @@ Configuration is then simple:
 
 ## Usage
 
-Just start scrolling :).
+Just start scrolling 😎.
 
 > [!TIP]
-> For best performance, use a build with native-compilation (see
-> [Speed](#Speed)).
+> For best performance, use a build of Emacs with native-compilation
+> (see [Speed](#Speed)).
 
 ## Configuration
 
-There is little to no configuration.
+There is little to no configuration necessary.
 
 ### Altering dumb mice behavior on emacs-mac
 
@@ -125,7 +126,7 @@ temporarily increased, and reset during idle time. The defaults should
 work well for most situations, but if necessary, can be configured using
 `ultra-scroll-gc-percentage` and `ultra-scroll-gc-idle-time`.
 
-### Hiding cursor, disabling other modes during scroll, and restoring column
+### Hiding cursor, and disabling other modes during scroll
 
 By default, `ultra-scroll` hides the cursor (and a `hl-line` if active)
 once it reaches the window edge, to prevent "bouncing cursor" behavior.
@@ -142,12 +143,15 @@ other modes during the scroll. The special hook variable
 
 By default, the hook contains `hl-line-mode`.
 
+### Restoring the column
+
 You can optionally enable restoring the visual column position after the
-scroll completes; see `ultra-scroll-preserve-column`.
+scroll completes; see `ultra-scroll-preserve-column`. Note that this
+require cursor hiding to be enabled.
 
 ## `pixel-scroll-precision` comparison and interoperability
 
-Emacs has a built-in smooth scrolling system called
+Emacs has a built-in smooth scrolling mode called
 `pixel-scroll-precision-mode`. In fact, by design, `ultra-scroll`
 *activates* the builtin `pixel-scroll-precision-mode`, remapping its
 scrolling function with its own. The latter also has the capability of
@@ -162,12 +166,12 @@ since it may not handle tall image scrolling well. Some systems (MacOS)
 get momentum scrolling "for free" from the OS, independent of this
 setting. If you experiment with re-enabling
 `pixel-scroll-precision-use-momentum` on other systems like Linux,
-please open an issue to report your findings.
+please start a [discussion](../../discussions) to report your findings.
 
 > [!WARNING]
-> `ultra-scroll` activates `pixel-scroll-precision-mode` by side effect.
-> If you are experimenting with both modes during a single session,
-> always disable `ultra-scroll-mode` first and then re-enable
+> `ultra-scroll` activates `pixel-scroll-precision-mode` by *side
+> effect*. If you are experimenting with both modes during a single
+> session, always disable `ultra-scroll-mode` first and then re-enable
 > `pixel-scroll-precision-mode`.
 
 ### A comparison between ultra-scroll and pixel-scroll-precision
@@ -177,8 +181,8 @@ question](#how-does-this-compare-to-the-built-in-smooth-scrolling).
 
 `pixel-scroll-precision-mode`:
 
-- Supports smooth scrolling even on systems which do *not* provide pixel
-  scroll data, using interpolation (see
+- Supports smooth scrolling even on systems which do *not* provide real
+  pixel scroll data, using interpolation (see
   `pixel-scroll-precision-interpolate-mice`).
 - Can simulate a "momentum" scrolling phase on systems which do not
   provide this capability (see `pixel-scroll-precision-use-momentum`).
@@ -196,10 +200,10 @@ question](#how-does-this-compare-to-the-built-in-smooth-scrolling).
 ## Related packages and functionality
 
 emacs-mac's own builtin `mac-mwheel-scroll`  
-This venerable code was introduced with
+This venerable code by Mitsuharu Yamamoto was introduced with
 [emacs-mac](https://bitbucket.org/mituharu/emacs-mac/) more than a
-decade ago, and was the first to provide smooth scrolling in any version
-of emacs.
+decade ago, and was the very first to provide smooth pixel scrolling in
+any version of emacs.
 
 `pixel-scroll-precision-mode`  
 A fast pixel scrolling by Po Lu, built in to Emacs as of v29.1 (see
@@ -214,7 +218,7 @@ A simpler line-by-line pixel scrolling mode, also found in the file
 An update to `pixel-scroll-mode` with variable speed.
 
 [sublimity](https://github.com/zk-phi/sublimity)  
-Includes smooth scrolling based on sublime editor.
+Implements smooth scrolling based on the sublime editor.
 
 ## Questions
 
@@ -236,7 +240,7 @@ Hence: molasses.
 
 I also wanted to be able to scroll through image-rich documents without
 worrying about jumpy/loopy scrolling behavior. And my extra dumb mouse
-didn't work well either: small scrolls did nothing: you'd have scroll
+didn't work well either: small scrolls did nothing: you'd have to scroll
 pretty aggressively to get any movement at all.
 
 How hard could it be to fix this? And the adventure began…
@@ -247,7 +251,7 @@ This packaged used to be called `ultra-scroll-mac`. The `emacs-mac` port
 of emacs exposes pixel-level scrolling event stream of Mac track-pads
 (and other fancy mice) in a distinct way, which is not supported by
 `pixel-scroll-precision-mode`. And unfortunately the default
-smooth-scrolling library included in `emacs-mac` is quite low
+smooth-scrolling library included in `emacs-mac` has somewhat low
 performance (see above).
 
 ### How does this compare to the built-in smooth scrolling?
@@ -315,12 +319,12 @@ across jumbo lines:
   manageable.
 - You cannot let-bind `scroll-conservatively` for effect, as it comes
   into play only on re-display (after your event handler returns). But
-  you *can* set it temporarily and restore it in idle time without ill
-  effect.
+  (I discovered later) you *can* set it *temporarily* and restore it
+  during idle time without ill effect.
 - `scroll-margin>0` is a no-no. This setting always moves point at least
-  that many lines from the window boundaries, which, unless you can
+  that many lines away from the window boundaries, which, unless you can
   reliably place point there during the scroll (even in the presence of
-  jumbo lines; see below), will cause loop-back. See \#3.
+  *jumbo lines*; see below), will cause loop-back. See \#3.
 - Virtual Scroll:
   - `vscroll` – a virtual rendered scrolling window hiding *below* the
     current window – is key to smooth scrolling, and altering `vscroll`
@@ -345,22 +349,22 @@ across jumbo lines:
   to learn the basic layout of lines on the window *before re-display*
   has occurred.
 - The "usable window height" deducts any header and the old-fashioned
-  tab-bar, but *not* the tab-bar-mode bar.
+  tab-bar, but *not* the `tab-bar-mode` bar.
 - Jumbo lines (lines taller than the window's height):
   - Scrolling towards buffer end:
     - When scrolling past jumbo lines towards the buffer's end (with
       `vscroll`), simply keep *point on the jumbo line* until it *fully
       disappears* from view. As a special case, Emacs will not re-center
-      when this happens.
-    - This is *not* true for lines that are shorter than the usable
-      window height (even if they are tall). In this case, you must
-      *avoid* placing point on any line which falls partially out of
-      view.
+      when this positioning is maintained.
+    - This is *not* true for lines that are *shorter* than the usable
+      window height (even if they are fairly tall images). In this case,
+      you must *avoid* placing point on any line which falls partially
+      out of view.
   - Scrolling towards buffer start:
     - When scrolling up past jumbo lines towards the buffer's start
       using `set-window-start` (lines of content move down), you must
-      keep point on the jumbo, but *only until it clears the top of the
-      window area* (even by one pixel).
+      keep point on the jumbo line, but *only until it clears the top of
+      the window area* (even by one pixel).
     - After this, you must move the point to the line above it.
     - In some cases (depending on truncation/visual-line-mode/etc.),
       this movement must occur from a position beyond the first full
@@ -379,11 +383,12 @@ right in my usage.
 
 ## Display bugs
 
-`ultra-scroll` exercises some rare corner cases of Emacs' redisplay
-logic, and as a result has revealed and helped fix a number of display
-bugs. These bugs lead to behaviors like slightly staccato scrolling in
-buffers with diverse line heights (e.g. inline images). If you think you
-have found a display bug, open an issue to discuss.
+`ultra-scroll` exercises some rare corner cases of Emacs' re-display
+logic, and as a result has revealed and helped fix quite a number of
+display bugs. These bugs lead to behaviors like slightly staccato
+scrolling in buffers with diverse line heights (e.g. inline images, à la
+`org-mode` with latex previews). If you think you have found a display
+bug, feel free to open an issue to discuss.
 
 - A [display bug](https://debbugs.gnu.org/cgi/bugreport.cgi?bug=67533)
   with inline images that cause them to sometimes misreport pixel
@@ -438,9 +443,9 @@ with various buffer and window sizes[^2].
     10-15% faster than it is on NS builds like `emacs-plus`. Very likely
     not noticeable.
 7.  The mode-line gets updated *very often* during smooth scrolls (and
-    in general), and poorly written fancy modeline add-ons are a common
-    source of slow-down. Good modeline modes will *rate-limit* their
-    updates behind timers and/or cache results in local/global
+    in general), and poorly written fancy modeline add-ons are a very
+    common source of slow-down. Good modeline modes will *rate-limit*
+    their updates behind timers and/or cache results in local/global
     variables. If your scrolling (or any other aspect of Emacs) "lags",
     try `(setq mode-line-format "NADA")` and see if that solves it. If
     so, suspect your fancy modeline.
