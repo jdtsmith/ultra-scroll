@@ -366,13 +366,15 @@ will be replayed for left/right touch ends."
       ;;        fractional line scroll amounts.
       ;;      - `:phase' is set to `began' on first scroll, then `changed'.
       ;;      - `:momentum-phase' is always `none'.
-      (ultra-scroll--prepare-to-scroll)
-      (let* ((scroll-delta (plist-get plist :scrolling-delta-y))
-	     (delta (or scroll-delta
-			;; regular non-touch scroll: fraction of a line
-			(* (plist-get plist :delta-y) (frame-char-height)
-			   ultra-scroll-mac-multiplier))))
-	(ultra-scroll--scroll (round delta) (mwheel-event-window event))))))
+      (if-let* ((scroll-delta (plist-get plist :scrolling-delta-y)))
+	  (let ((window (mwheel-event-window event))
+		(delta (or scroll-delta
+			   ;; regular non-touch scroll: fraction of a line
+			   (* (plist-get plist :delta-y) (frame-char-height)
+			      ultra-scroll-mac-multiplier))))
+	    (ultra-scroll--prepare-to-scroll window)
+	    (ultra-scroll--scroll (round delta) window))
+	(mac-forward-wheel-event t 'mwheel-scroll event arg)))))
 
 ; scroll-isearch support
 (put 'ultra-scroll 'scroll-command t)
