@@ -125,7 +125,8 @@ directly, toggling them only if they are already active."
     (vertical-motion (cons (/ uss (frame-char-width)) 0))))
 
 (defun ultra-scroll--hide-cursor (window)
-  "Hide cursor in WINDOW."
+  "Hide cursor in WINDOW.
+Cursor is hidden only during scroll when it reaches the window boundary."
   (when ultra-scroll-hide-cursor
     (if ultra-scroll--hide-cursor-timer
 	(timer-set-time ultra-scroll--hide-cursor-timer ; reschedule
@@ -169,19 +170,22 @@ directly, toggling them only if they are already active."
     (setq scroll-conservatively ultra-scroll--scroll-conservatively-orig))
   (setq ultra-scroll--timer nil))
 
-(defsubst ultra-scroll--prepare-to-scroll ()
-  "Prepare to scroll by lifting GC percentage and setting scroll parameters.
-See `ultra-scroll-gc-percentage' to configuring whether GC changes occur
-and the `gc-cons-percentage' level to set temporarily."
+(defsubst ultra-scroll--prepare-to-scroll (&optional window)
+  "Prepare to scroll in WINDOW.
+WINDOW is the selected window, if not passed.  Preparation includes
+lifting GC percentage, setting scroll parameters, updating vscroll in
+buffers displayed multiple times, etc.  See `ultra-scroll-gc-percentage'
+to configuring whether GC changes occur and the `gc-cons-percentage'
+level to set temporarily."
   (unless ultra-scroll--timer
-    (unless (and (window-parameter nil 'ultra-scroll--start)
+    (unless (and (window-parameter window 'ultra-scroll--start)
 		 ;; preserve target for multiple consecutive scroll commands
 		 (memq last-command '( ultra-scroll ultra-scroll-mac
 				       mac-mwheel-scroll pixel-scroll-precision)))
-      (set-window-parameter nil 'ultra-scroll--start
+      (set-window-parameter window 'ultra-scroll--start
 			    (car (posn-x-y (posn-at-point)))))
     ;; Work around lag when same buffer has vscroll in another window (#32)
-    (dolist (w (cdr (get-buffer-window-list (current-buffer))))
+    (dolist (w (cdr (get-buffer-window-list (window-buffer window))))
       (set-window-vscroll w 0))
     (let (changed)
       (when ultra-scroll-gc-percentage
@@ -319,8 +323,9 @@ EVENT is a scrolling event."
   (let ((delta (nth 4 event)))
     (if (not delta)
 	(mwheel-scroll event arg)
-      (ultra-scroll--prepare-to-scroll)
-      (ultra-scroll--scroll (round (cdr delta)) (mwheel-event-window event)))))
+      (let ((window (mwheel-event-window event)))
+	(ultra-scroll--prepare-to-scroll window)
+	(ultra-scroll--scroll (round (cdr delta)) window)))))
 
 (declare-function mac-forward-wheel-event "mac-win")
 (defun ultra-scroll-mac (event &optional arg)
@@ -379,11 +384,10 @@ will be replayed for left/right touch ends."
 This reads EVENT-CNT independent scroll events (default: 30) and checks
 their PIXEL-DELTA values to see if they differ."
   (interactive "p")
-  (let
-      ((buf (get-buffer-create "*ultra-scroll-report*"))
-       (nc (string-match "\\bNATIVE_COMP\\b" system-configuration-features))
-       (inhibit-read-only t)
-       (max-cnt (max event-cnt 30)) (cnt 1) deltas mac-basic ev tm)
+  (let ((buf (get-buffer-create "*ultra-scroll-report*"))
+	(nc (string-match "\\bNATIVE_COMP\\b" system-configuration-features))
+	(inhibit-read-only t)
+	(max-cnt (max event-cnt 30)) (cnt 1) deltas mac-basic ev tm)
     (message (concat "ultra-scroll: checking scroll data\n"
 		     (format
 		      "Scroll your mouse wheel or track-pad slow then fast to generate %d events"
