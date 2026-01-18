@@ -5,8 +5,8 @@
 
 * DEVELOPMENT
 
-- Handle event forwarding for mac events without their plist more correctly.
-- Ensure scrolled window is correct.
+- Correctly handle forwarded events with no intact plist.
+- Ensure the correct scrolled window is prepared for scrolling.
 
 * v0.5.0 (2025-12-15)
 
