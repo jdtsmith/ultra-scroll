@@ -100,7 +100,7 @@ Just start scrolling 😎.
 
 ## Configuration
 
-There is little to no configuration necessary.
+There is little configuration necessary.
 
 ### Altering dumb mice behavior on emacs-mac
 
@@ -126,28 +126,55 @@ temporarily increased, and reset during idle time. The defaults should
 work well for most situations, but if necessary, can be configured using
 `ultra-scroll-gc-percentage` and `ultra-scroll-gc-idle-time`.
 
-### Hiding cursor, and disabling other modes during scroll
+### Leave functions
 
-By default, `ultra-scroll` hides the cursor (and a `hl-line` if active)
-once it reaches the window edge, to prevent "bouncing cursor" behavior.
-This can be disabled, or the time delay to restore the cursor set, with
-`ultra-scroll-hide-cursor`.
+When point leaves the initial window bounds during scrolling,
+`ultra-scroll` can perform various helpful functions, restoring the
+state after scrolling ends. The custom variable
+`ultra-scroll-restore-time` can be used to configure the delay time for
+restoring state.
 
-In addition to the cursor, it is sometimes useful to temporarily disable
-other modes during the scroll. The special hook variable
-`ultra-scroll-hide-functions` can be used for this, e.g.:
+1.  Hiding cursor during scroll
 
-``` commonlisp
-(add-hook 'ultra-scroll-hide-functions 'hl-line-mode)
-```
+    By default, `ultra-scroll` hides the cursor once it reaches the
+    window edge, to prevent "bouncing cursor" behavior. This can be
+    disabled with `ultra-scroll-hide-cursor`.
 
-By default, the hook contains `hl-line-mode`.
+2.  Restoring the column position after scroll
 
-### Restoring the column
+    By default, the visual column position will be restored after the
+    scroll completes; see `ultra-scroll-preserve-column` to configure.
 
-You can optionally enable restoring the visual column position after the
-scroll completes; see `ultra-scroll-preserve-column`. Note that this
-require cursor hiding to be enabled.
+3.  Pushing a mark for quickly returning to the place where scrolling
+    began
+
+    It can be convenient to remember the position where scrolling
+    commenced. By default, a mark is pushed where scrolling began, as
+    soon as point leaves the initial window bounds (i.e. where the
+    cursor is hidden, if configured). Subsequent scrolling without
+    intervening commands will not by default push additional marks. This
+    can be configured in `ultra-scroll-push-mark`.
+
+    This allows you to scroll away to read something, then `C-x C-x` (or
+    `C-u C-x C-x` if you have `transient-mark-mode` enabled), or
+    `C-u SPC` to quickly pop back to your initial position. I also
+    recommend `consult-mark` as a quick way to browse through your
+    marks.
+
+4.  Other hide general hide functions
+
+    In addition to the cursor, it is sometimes useful to temporarily
+    disable other modes during scrolling, for example to hide certain
+    decorations or prevent expensive calculations. The special hook
+    variable `ultra-scroll-hide-functions` can be used for this, e.g.:
+
+    ``` commonlisp
+    (add-hook 'ultra-scroll-hide-functions 'hl-line-mode)
+    ```
+
+    By default, the hook contains `hl-line-mode`. Any function can be
+    added to the list to do something useful during scroll; they should
+    take a single argument, set to 1 on scroll start and -1 at end.
 
 ## `pixel-scroll-precision` comparison and interoperability
 
@@ -172,7 +199,7 @@ please start a [discussion](../../discussions) to report your findings.
 > `ultra-scroll` activates `pixel-scroll-precision-mode` by *side
 > effect*. If you are experimenting with both modes during a single
 > session, always disable `ultra-scroll-mode` first and then re-enable
-> `pixel-scroll-precision-mode`.
+> `pixel-scroll-precision-mode` to test it.
 
 ### A comparison between ultra-scroll and pixel-scroll-precision
 
@@ -182,7 +209,7 @@ question](#how-does-this-compare-to-the-built-in-smooth-scrolling).
 `pixel-scroll-precision-mode`:
 
 - Supports smooth scrolling even on systems which do *not* provide real
-  pixel scroll data, using interpolation (see
+  pixel-level scroll data, using interpolation (see
   `pixel-scroll-precision-interpolate-mice`).
 - Can simulate a "momentum" scrolling phase on systems which do not
   provide this capability (see `pixel-scroll-precision-use-momentum`).
@@ -190,8 +217,9 @@ question](#how-does-this-compare-to-the-built-in-smooth-scrolling).
 
 `ultra-scroll`:
 
-- Fully supports *only* those system and hardware combos that deliver
-  *real* pixel scroll data (see [Compatibility](#Compatibility)).
+- Fully supports *only* those system and hardware combinations that
+  deliver *real* pixel scroll data (see
+  [Compatibility](#Compatibility)).
 - Provides "momentum" scrolling only on systems which provide this
   themselves.
 - Is somewhat faster (see [Speed](#Speed)).
@@ -206,9 +234,9 @@ decade ago, and was the very first to provide smooth pixel scrolling in
 any version of emacs.
 
 `pixel-scroll-precision-mode`  
-A fast pixel scrolling by Po Lu, built in to Emacs as of v29.1 (see
-`pixel-scroll.el`). Does not support `emacs-mac`. `ultra-scroll` was
-initially based on its design, but many design elements have changed.
+A fast pixel scrolling package by Po Lu, built in to Emacs as of v29.1
+(see `pixel-scroll.el`). Does not support `emacs-mac`. `ultra-scroll`
+was initially based on its design, but has been entirely re-implemented.
 
 `pixel-scroll-mode`  
 A simpler line-by-line pixel scrolling mode, also found in the file
@@ -234,9 +262,9 @@ Scrolling Emacs feels like moving through (light) molasses. *No bueno*.
 Checking into it, the smooth scroll event callback takes 15-20ms
 scrolling in one direction, and 3–5x longer in the other. This
 performance is perfectly fine for normal mice which deliver a few
-scrolling events a second. *But track-pad and fancy mouse scroll events
-are arriving every 10ms, or less*! The code just couldn't keep up.
-Hence: molasses.
+scrolling events a second, jumping a line or so at a time. *But
+track-pad and fancy mouse scroll events are arriving every 10ms, or
+less*! The code just couldn't keep up. Hence: molasses.
 
 I also wanted to be able to scroll through image-rich documents without
 worrying about jumpy/loopy scrolling behavior. And my extra dumb mouse
@@ -254,7 +282,7 @@ of emacs exposes pixel-level scrolling event stream of Mac track-pads
 smooth-scrolling library included in `emacs-mac` has somewhat low
 performance (see above).
 
-### How does this compare to the built-in smooth scrolling?
+### How does this compare to the built-in smooth scrolling in GNU Emacs?
 
 On the `emacs-mac` build, there is no comparison, because
 `pixel-scroll-precision-mode` doesn't work there. On other builds, they
@@ -350,16 +378,17 @@ across jumbo lines:
   has occurred.
 - The "usable window height" deducts any header and the old-fashioned
   tab-bar, but *not* the `tab-bar-mode` bar.
-- Jumbo lines (lines taller than the window's height):
+- Jumbo lines (lines taller than the window's height) are tricky to
+  handle:
   - Scrolling towards buffer end:
     - When scrolling past jumbo lines towards the buffer's end (with
       `vscroll`), simply keep *point on the jumbo line* until it *fully
       disappears* from view. As a special case, Emacs will not re-center
       when this positioning is maintained.
-    - This is *not* true for lines that are *shorter* than the usable
-      window height (even if they are fairly tall images). In this case,
-      you must *avoid* placing point on any line which falls partially
-      out of view.
+    - Importantly, this is *not* true for lines that are *shorter* than
+      the usable window height (even if they are fairly tall images). In
+      this case, you must *avoid* placing point on any line which falls
+      partially out of view.
   - Scrolling towards buffer start:
     - When scrolling up past jumbo lines towards the buffer's start
       using `set-window-start` (lines of content move down), you must

@@ -2,9 +2,19 @@
 #+author: J.D. Smith
 #+language: en
 
+* v0.6.0 (2026-03-25)
 
-* DEVELOPMENT
-
+- By default, before scrolling outside the initial window bounds, a
+  mark is now pushed.  A series of scrolling operations without any
+  other commands in between do not push new marks (unless requested).
+  This allows scrolling away and quickly returning to the initial
+  position.
+- Introduce "leave functions" which include cursor hiding, column
+  restoration (now on by default), pushing a mark, and the hide
+  functions, each of which can be enabled independently. 
+- Breaking change: ~ultra-scroll-hide-cursor~ is now a boolean only.
+  The delay time after scrolling ends to restore columns, cursor
+  visibility, etc. is now configured with ~ultra-scroll-restore-time~.
 - Correctly handle forwarded events with no intact plist.
 - Ensure the correct scrolled window is prepared for scrolling.
 

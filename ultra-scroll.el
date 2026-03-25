@@ -1,10 +1,10 @@
 ;;; ultra-scroll.el --- Fast and smooth scrolling -*- lexical-binding: t; -*-
-;; Copyright (C) 2023-2025  J.D. Smith
+;; Copyright (C) 2023-2026  J.D. Smith
 
 ;; Author: J.D. Smith
 ;; URL: https://github.com/jdtsmith/ultra-scroll
 ;; Package-Requires: ((emacs "29.1"))
-;; Version: 0.5.0
+;; Version: 0.6.0
 ;; Keywords: convenience
 ;; Prefix: ultra-scroll
 ;; Separator: -
