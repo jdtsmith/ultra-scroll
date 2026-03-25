@@ -62,103 +62,144 @@ time (see `ultra-scroll-idle-time')."
   :group 'scrolling)
 
 (defcustom ultra-scroll-idle-time 0.5
-  "Idle time in sec after which to restore GC and scroll parameters.
+  "Idle time in sec after which to restore GC and related scroll parameters.
 GC percentage is restored only if `ultra-scroll-gc-percentage' is non-nil."
   :type 'float
   :group 'scrolling)
 (make-obsolete-variable 'ultra-scroll-gc-idle-time 'ultra-scroll-idle-time "0.4")
 
-(defcustom ultra-scroll-hide-cursor 0.25
+(defcustom ultra-scroll-hide-cursor t
   "Hide the cursor during scrolls after it reaches the window bounds.
-Time in sec after which to restore the cursor.  Set to nil to
-disable cursor hiding.  Note that, if this is active, any
-additional functions or modes specified in
-`ultra-scroll-hide-functions' are also called."
-  :type '(choice (const :value nil :tag "Disable") (float :tag "Time (s)"))
+Note that in versions prior to v0.6, this function took a time.  That
+configuration is now set by `ultra-scroll-restore-time'."
+  :type 'boolean
   :group 'scrolling)
 
-(defcustom ultra-scroll-preserve-column nil
+(defcustom ultra-scroll-preserve-column t
   "Restore the column position after scroll completes.
-Only takes effect if `ultra-scroll-hide-cursor' is non-nil."
+Only takes effect if `ultra-scroll-leave--restore-time' is
+non-nil."
   :type 'boolean
+  :group 'scrolling)
+
+(defcustom ultra-scroll-push-mark t
+  "Push the mark while scrolling.
+If non-nil, push the position prior to scrolling as mark when point
+leaves the window.  Normally the mark is only pushed if the last command
+wasn't a scrolling command, so that multiple scrolling commands in
+series, no matter the delay between them, will set only one mark at the
+very beginning.  If this is set to the symbol `every', each new scroll
+sequence will push the mark."
+  :type '(choice (const :value nil :tag "Disable")
+		 (const :value t :tag "Enable")
+		 (const :value every :tag "On every new scroll"))
   :group 'scrolling)
 
 (defcustom ultra-scroll-hide-functions '(hl-line-mode)
   "Functions to call when scrolling begins and ends.
-This hook can also be used to specify modes to disable
-temporarily during scrolling, and is only active if
-`ultra-scroll-hide-cursor' is non-nil.  Each function will be
-called with a single argument: -1 when scrolling starts, and 1
-when it ends (see `ultra-scroll-hide-cursor' for the timing of
+The hook runs only when point reaches the window boundary (i.e. when
+`window-point' changes).  This hook can also be used to specify modes to
+disable temporarily during off-window scrolling.  Each function will be
+called with a single argument: -1 when scrolling starts, and 1 when it
+ends (see `ultra-scroll-leave--restore-time' for the timing of
 this).
 
-If a member of this hook is a symbol ending in \"-mode\", the
-associated mode function is only called if the symbol is bound
-and non-nil.  This is to facilitate including mode functions
-directly, toggling them only if they are already active."
+If a member of this hook is a symbol ending in \"-mode\", the associated
+mode function is only called if the symbol is bound and non-nil.  This
+is to facilitate including mode functions directly, toggling them off
+and on during scroll only if they are already active."
   :type 'hook
   :group 'scrolling)
 
-;;;; Cursor Hiding
-(defvar-local ultra-scroll--hide-cursor-timer nil)
-(defvar-local ultra-scroll--hide-cursor-start nil)
-(defvar-local ultra-scroll--hide-cursor-undo-hook nil)
-(defun ultra-scroll--hide-cursor-undo (buf)
-  "Undo cursor hiding in BUF."
+(defcustom ultra-scroll-leave--restore-time 0.25
+  "Time in sec after scrolling ends to restore cursor, etc.
+After scrolling begins and point leaves the initial window view,
+`ultra-scroll' can optionally perform a number of different \"leave\"
+functions.  These include:
+
+1. hiding the cursor (`ultra-scroll-hide-cursor'),
+
+2. saving the column position for later
+   restoration (`ultra-scroll-preserve-column'),
+
+3. pushing a mark at the position where scrolling began so you can
+   easily return to it (`ultra-scroll-push-mark'), and
+
+4. temporarily disabling other modes, or calling arbitrary start/end
+   functions during long scrolls (`ultra-scroll-hide-functions')."
+  :type '(float :tag "Time (s)")
+  :group 'scrolling)
+
+;;;; Leave-view actions (hide cursor, preserve column, etc.)
+(defvar-local ultra-scroll--leave--timer nil)
+(defvar-local ultra-scroll--leave-window-point-start nil)
+(defvar-local ultra-scroll--leave-restore-functions nil)
+
+(defun ultra-scroll--leave-restore (buf)
+  "Restore BUF after scrolling outside the initial window view.
+See `ultra-scroll-leave--restore-time' for details."
   (when (buffer-live-p buf)
     (with-current-buffer buf
-      ;; TODO It would be nice to recenter the point here,
-      ;; but this leads to problems with tall images.
-      ;; (when-let* ((win (get-buffer-window buf)))
-      ;;   (with-selected-window win
-      ;;     (goto-char (/ (+ (window-start) (window-end nil t)) 2))
-      ;;     (beginning-of-line)))
-      ;; re-enable
-      (run-hook-with-args 'ultra-scroll--hide-cursor-undo-hook 1)
-      (kill-local-variable 'ultra-scroll--hide-cursor-start)
-      (kill-local-variable 'ultra-scroll--hide-cursor-timer)
-      (kill-local-variable 'ultra-scroll--hide-cursor-undo-hook))))
+      (run-hook-with-args 'ultra-scroll--leave-restore-functions 1)
+      (kill-local-variable 'ultra-scroll--leave-restore-functions)
+      (kill-local-variable 'ultra-scroll--leave--timer)
+      (kill-local-variable 'ultra-scroll--leave-window-point-start))))
 
 (defun ultra-scroll--restore-column (_v)
   "Attempt to restore the starting column position."
-  (when-let* ((uss (window-parameter nil 'ultra-scroll--start)))
+  (when-let* ((uss (window-parameter nil 'ultra-scroll--start-col)))
     (vertical-motion (cons (/ uss (frame-char-width)) 0))))
 
-(defun ultra-scroll--hide-cursor (window)
-  "Hide cursor in WINDOW.
-Cursor is hidden only during scroll when it reaches the window boundary."
-  (when ultra-scroll-hide-cursor
-    (if ultra-scroll--hide-cursor-timer
-	(timer-set-time ultra-scroll--hide-cursor-timer ; reschedule
-			(timer-relative-time nil ultra-scroll-hide-cursor))
-      (setq ultra-scroll--hide-cursor-start (window-point window)
-            ultra-scroll--hide-cursor-timer
-	    (run-at-time ultra-scroll-hide-cursor nil
-			 #'ultra-scroll--hide-cursor-undo
-			 (window-buffer window))))
-    (unless (or ultra-scroll--hide-cursor-undo-hook ; already hiding
-		(eq (window-point window) ; not yet at window boundary
-		    ultra-scroll--hide-cursor-start))
-      (push (if (local-variable-p 'cursor-type)
-                (let ((orig cursor-type))
-                  (lambda (_v) (setq-local cursor-type orig)))
-	      (lambda (_v) (kill-local-variable 'cursor-type)))
-            ultra-scroll--hide-cursor-undo-hook)
+(defun ultra-scroll--leave (window)
+  "Perform any configured leave actions in WINDOW if appropriate.
+Leave actions happen only when the original window point has
+changed (i.e. point has left the initial window view during scroll).
+See `ultra-scroll-leave--restore-time' for details on the available
+actions."
+  (if ultra-scroll--leave--timer	; leave actions have already run
+      (timer-set-time ultra-scroll--leave--timer ; reschedule timer
+		      (timer-relative-time
+		       nil ultra-scroll-leave--restore-time))
+    (unless (eq (window-point window)	; not yet at window boundary
+		ultra-scroll--leave-window-point-start)
+      (setq ultra-scroll--leave--timer
+	    (run-at-time ultra-scroll-leave--restore-time nil
+			 #'ultra-scroll--leave-restore
+			 (window-buffer window)))
+      
+      ;; Cursor hiding
+      (when ultra-scroll-hide-cursor
+	(push (if (local-variable-p 'cursor-type)
+		  (let ((orig cursor-type))
+		    (lambda (_v) (setq-local cursor-type orig)))
+		(lambda (_v) (kill-local-variable 'cursor-type)))
+	      ultra-scroll--leave-restore-functions)
+	(setq-local cursor-type nil))
+
+      ;; Schedule column restoration
       (when ultra-scroll-preserve-column
 	(push #'ultra-scroll--restore-column
-	      ultra-scroll--hide-cursor-undo-hook))
-      (setq-local cursor-type nil)
+	      ultra-scroll--leave-restore-functions))
+
+      ;; Push mark and remove window parameter
+      (when-let* ((_ ultra-scroll-push-mark)
+		  (pos (window-parameter window 'ultra-scroll--start-pos)))
+	(push-mark pos 'nomsg)
+	(message "Pushing mark: %d" pos)
+	(set-window-parameter window 'ultra-scroll--start-pos nil))
+    
+      ;; Hide functions
       (run-hook-wrapped
        'ultra-scroll-hide-functions
        (lambda (fun)
 	 (when (or (not (symbolp fun))
 		   (not (string-suffix-p "-mode" (symbol-name fun)))
 		   (and (boundp fun) (symbol-value fun)))
-	   (push fun ultra-scroll--hide-cursor-undo-hook)
-	   (funcall fun -1)) 		; disable
+	   (push fun ultra-scroll--leave-restore-functions) ; schedule reenable
+	   (funcall fun -1))				     ; disable
 	 nil)))))
 
-;;;; Other scroll begin/end actions
+;;;; Other scroll begin/end config actions
 (defvar ultra-scroll--gc-percentage-orig nil)
 (defvar ultra-scroll--scroll-conservatively-orig nil)
 (defvar ultra-scroll--timer nil)
@@ -166,40 +207,54 @@ Cursor is hidden only during scroll when it reaches the window boundary."
   "Reset GC variable and scroll settings during idle time."
   (when ultra-scroll--gc-percentage-orig
     (setq gc-cons-percentage ultra-scroll--gc-percentage-orig))
-  (when ultra-scroll--scroll-conservatively-orig
+  (when (< ultra-scroll--scroll-conservatively-orig 100)
     (setq scroll-conservatively ultra-scroll--scroll-conservatively-orig))
   (setq ultra-scroll--timer nil))
 
 (defsubst ultra-scroll--prepare-to-scroll (&optional window)
   "Prepare to scroll in WINDOW.
-WINDOW is the selected window, if not passed.  Preparation includes
+If not passed, WINDOW is the selected window.  Preparation includes
 lifting GC percentage, setting scroll parameters, updating vscroll in
-buffers displayed multiple times, etc.  See `ultra-scroll-gc-percentage'
-to configuring whether GC changes occur and the `gc-cons-percentage'
-level to set temporarily."
-  (unless ultra-scroll--timer
-    (unless (and (window-parameter window 'ultra-scroll--start)
-		 ;; preserve target for multiple consecutive scroll commands
-		 (memq last-command '( ultra-scroll ultra-scroll-mac
-				       mac-mwheel-scroll pixel-scroll-precision)))
-      (set-window-parameter window 'ultra-scroll--start
-			    (car (posn-x-y (posn-at-point)))))
-    ;; Work around lag when same buffer has vscroll in another window (#32)
+buffers displayed multiple times, and caching some information for
+\"leave\" functions.  See `ultra-scroll-gc-percentage' to configuring
+whether GC changes occur and the `gc-cons-percentage' level to set
+temporarily."
+  (unless ultra-scroll--timer  		; already scrolling
+    ;; save window point
+    (setq ultra-scroll--leave-window-point-start
+	  (window-point window))
+
+    ;; Update target column and saved mark position, but only if we're
+    ;; not simply continuing with another scroll.
+    (let ((non-scroll-p
+	   (not (memq last-command
+		      '( ultra-scroll ultra-scroll-mac
+			 mac-mwheel-scroll
+			 pixel-scroll-precision)))))
+      ;; preserve target column
+      (when (and ultra-scroll-preserve-column non-scroll-p)
+	(set-window-parameter window 'ultra-scroll--start-col
+			      (car (posn-x-y (posn-at-point)))))
+      ;; Save potential push mark position
+      (when (and ultra-scroll-push-mark
+		 (or non-scroll-p (eq ultra-scroll-push-mark 'every)))
+	(set-window-parameter window 'ultra-scroll--start-pos (point))))
+
+    ;; Work around lag when same buffer has nonzero vscroll in another window (#32)
     (dolist (w (cdr (get-buffer-window-list (window-buffer window))))
       (set-window-vscroll w 0))
-    (let (changed)
-      (when ultra-scroll-gc-percentage
-	(setq changed t
-	      gc-cons-percentage	; reduce GC's during scroll
-	      (max gc-cons-percentage ultra-scroll-gc-percentage)))
-      (when (< scroll-conservatively 100)
-	(setq changed t
-	      ultra-scroll--scroll-conservatively-orig scroll-conservatively
-	      scroll-conservatively 101))
-      (when changed
-	(setq ultra-scroll--timer
-	      (run-with-idle-timer ultra-scroll-idle-time nil
-				   #'ultra-scroll--end-scroll))))))
+
+    ;; Update GC and scroll parameters during scroll
+    (when ultra-scroll-gc-percentage
+      (setq gc-cons-percentage
+	    (max gc-cons-percentage ultra-scroll-gc-percentage)))
+    (when (< scroll-conservatively 100)
+      (setq ultra-scroll--scroll-conservatively-orig scroll-conservatively
+	    scroll-conservatively 101))
+
+    (setq ultra-scroll--timer
+	  (run-with-idle-timer ultra-scroll-idle-time nil
+			       #'ultra-scroll--end-scroll))))
 
 ;;;; Scroll
 (defun ultra-scroll-down (delta)
@@ -306,14 +361,14 @@ DELTA should be less than the window's height."
 	  ((beginning-of-buffer end-of-buffer)
 	   (let* ((end (eq (car err) 'end-of-buffer))
 		  (p (if end (point-max) (point-min))))
-	     (when ultra-scroll--hide-cursor-undo-hook (goto-char p))
+	     (when ultra-scroll--leave-restore-functions (goto-char p))
 	     (set-window-start window p)
 	     (set-window-vscroll window 0 t t)
 	     (set-window-parameter window 'ultra-scroll--ignore
 				   (cons (point) end))
 	     (message (error-message-string
 		       (if end '(end-of-buffer) '(beginning-of-buffer)))))))
-        (ultra-scroll--hide-cursor window)))))
+        (ultra-scroll--leave window)))))
 
 (defun ultra-scroll (event &optional arg)
   "Smooth scroll EVENT.
