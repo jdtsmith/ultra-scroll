@@ -2,6 +2,8 @@
 
 <a href="https://melpa.org/#/ultra-scroll"><img alt="MELPA" src="https://melpa.org/packages/ultra-scroll-badge.svg"/></a>
 
+<a href="https://stable.melpa.org/#/ultra-scroll"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/ultra-scroll-badge.svg"/></a>
+
 `ultra-scroll`[^1] is a smooth-scrolling package for emacs, with native
 support for standard builds as well as
 [emacs-mac](https://bitbucket.org/mituharu/emacs-mac). It provides
@@ -482,14 +484,6 @@ with various buffer and window sizes[^2].
 [^1]: Formerly `ultra-scroll-mac`.
 
 [^2]: To try this yourself, `M-x elp-instrument-function` on both
-    `ultra-scroll-up/down`, scroll around (both directions) in a big
-    buffer with a large window, then `M-x elp-results`. The last column
-    gives average time in seconds. Less than 0.003s (i.e. 3ms) is ideal,
-    8ms is still perfectly usable, 15ms you'll feel a bit, 50ms will be
-    very frustrating. `scroll-down` is always faster than `scroll-up`
-    due to an asymmetry in Emacs' `vscroll` buffer.
-
-[^3]: To try this yourself, `M-x elp-instrument-function` on both
     `ultra-scroll-up/down`, scroll around (both directions) in a big
     buffer with a large window, then `M-x elp-results`. The last column
     gives average time in seconds. Less than 0.003s (i.e. 3ms) is ideal,
