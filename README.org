@@ -1,5 +1,5 @@
 * ultra-scroll: scroll emacs like lightning ⚡🖱️⚡
-#+html: <a href="https://melpa.org/#/ultra-scroll"><img alt="MELPA" src="https://melpa.org/packages/ultra-scroll-badge.svg"/></a><a href="https://stable.melpa.org/#/ultra-scroll"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/ultra-scroll-badge.svg"/></a>
+#+html: <a href="https://melpa.org/#/ultra-scroll"><img alt="MELPA" src="https://melpa.org/packages/ultra-scroll-badge.svg"/></a>&nbsp;<a href="https://stable.melpa.org/#/ultra-scroll"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/ultra-scroll-badge.svg"/></a>
 
 ~ultra-scroll~[fn:1] is a smooth-scrolling package for emacs, with native support for standard builds as well as [[https://bitbucket.org/mituharu/emacs-mac][emacs-mac]].  It provides highly optimized, pixel-precise smooth scrolling which can readily keep up with the /very/ high event rates of modern track-pads and high-precision wheel mice.
 
@@ -7,7 +7,7 @@ You move your fingers, the page responds, /instantly/:
 
 [[https://github-production-user-asset-6210df.s3.amazonaws.com/93749/290018933-ed5cf414-eab5-4ba8-b077-30cac0c5ace0.mov]]
 
-Importantly, ~ultra-scroll~ can cleanly /scroll right across/ tall images and other jumbo lines -- a perennial problem with scrolling packages to date.  As a bonus, it enables relatively smooth scrolling even with dumb third party mice.
+Importantly, ~ultra-scroll~ can cleanly /scroll right across/ tall images and other jumbo lines -- a perennial problem with scrolling packages to date.  As a bonus, it enables relatively smooth scrolling even with dumb third party mice, and has a few other optional convenience features, like hiding the cursor during scroll, restoring column afterwards, and pushing a mark so you don't lose your initial location.
 
 Note, the ~previous-buffer~ animation above is from two-finger track-pad swiping, and is an [[https://github.com/jdtsmith/emacs-mac][emacs-mac]] exclusive.
 

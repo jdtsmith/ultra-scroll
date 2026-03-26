@@ -1,6 +1,6 @@
 # ultra-scroll: scroll emacs like lightning ⚡🖱️⚡
 
-<a href="https://melpa.org/#/ultra-scroll"><img alt="MELPA" src="https://melpa.org/packages/ultra-scroll-badge.svg"/></a><a href="https://stable.melpa.org/#/ultra-scroll"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/ultra-scroll-badge.svg"/></a>
+<a href="https://melpa.org/#/ultra-scroll"><img alt="MELPA" src="https://melpa.org/packages/ultra-scroll-badge.svg"/></a>&nbsp;<a href="https://stable.melpa.org/#/ultra-scroll"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/ultra-scroll-badge.svg"/></a>
 
 `ultra-scroll`[^1] is a smooth-scrolling package for emacs, with native
 support for standard builds as well as
@@ -16,7 +16,10 @@ You move your fingers, the page responds, *instantly*:
 Importantly, `ultra-scroll` can cleanly *scroll right across* tall
 images and other jumbo lines – a perennial problem with scrolling
 packages to date. As a bonus, it enables relatively smooth scrolling
-even with dumb third party mice.
+even with dumb third party mice, and has a few other optional
+convenience features, like hiding the cursor during scroll, restoring
+column afterwards, and pushing a mark so you don't lose your initial
+location.
 
 Note, the `previous-buffer` animation above is from two-finger track-pad
 swiping, and is an [emacs-mac](https://github.com/jdtsmith/emacs-mac)
@@ -458,7 +461,7 @@ with various buffer and window sizes[^2].
     time, so that all the other emacs commands that occur when new
     content is brought into view (font-lock) can run without causing
     scroll lag, for all your different modes. **Faster is better**: 3ms
-    or less[^3] in a light buffer would be *ideal*.
+    or less[^2] in a light buffer would be *ideal*.
 4.  Building `--with-native-comp` is *essential* for ultra-smooth
     scrolling. It increases the speed of each individual scroll command
     by **\>3x**, which is important since these commands are called so
