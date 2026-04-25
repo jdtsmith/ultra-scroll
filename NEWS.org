@@ -2,6 +2,12 @@
 #+author: J.D. Smith
 #+language: en
 
+* DEVELOPMENT
+
+- Use ~window-cursor-type~ where available during cursor hiding, to
+  target hiding only to the window being scrolled (e.g. if the same
+  buffer is visible in multiple windows).
+
 * v0.6.0 (2026-03-25)
 
 - By default, before scrolling outside the initial window bounds, a
