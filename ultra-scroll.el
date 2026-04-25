@@ -169,12 +169,20 @@ actions."
       
       ;; Cursor hiding
       (when ultra-scroll-hide-cursor
-	(push (if (local-variable-p 'cursor-type)
-		  (let ((orig cursor-type))
-		    (lambda (_v) (setq-local cursor-type orig)))
-		(lambda (_v) (kill-local-variable 'cursor-type)))
+	(push (cond
+	       ((fboundp #'window-cursor-type)
+		(let ((orig (window-cursor-type window)))
+		  (lambda (_v) (set-window-cursor-type window orig))))
+	       
+	       ((local-variable-p 'cursor-type)
+		(let ((orig cursor-type))
+		  (lambda (_v) (setq-local cursor-type orig))))
+		 
+	       (t (lambda (_v) (kill-local-variable 'cursor-type))))
 	      ultra-scroll--leave-restore-functions)
-	(setq-local cursor-type nil))
+	(if (fboundp #'set-window-cursor-type)
+	    (set-window-cursor-type window nil)
+	  (setq-local cursor-type nil)))
 
       ;; Schedule column restoration
       (when ultra-scroll-preserve-column
@@ -185,7 +193,6 @@ actions."
       (when-let* ((_ ultra-scroll-push-mark)
 		  (pos (window-parameter window 'ultra-scroll--start-pos)))
 	(push-mark pos 'nomsg)
-	(message "Pushing mark: %d" pos)
 	(set-window-parameter window 'ultra-scroll--start-pos nil))
     
       ;; Hide functions
