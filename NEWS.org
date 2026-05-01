@@ -2,7 +2,7 @@
 #+author: J.D. Smith
 #+language: en
 
-* DEVELOPMENT
+* v0.6.1 (2026-05-01)
 
 - Use ~window-cursor-type~ where available during cursor hiding (instead
   of the buffer-local equivalent), to target hiding only to the window
