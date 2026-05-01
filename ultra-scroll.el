@@ -77,7 +77,7 @@ configuration is now set by `ultra-scroll-restore-time'."
 
 (defcustom ultra-scroll-preserve-column t
   "Restore the column position after scroll completes.
-Only takes effect if `ultra-scroll-leave--restore-time' is
+Only takes effect if `ultra-scroll-restore-time' is
 non-nil."
   :type 'boolean
   :group 'scrolling)
@@ -101,7 +101,7 @@ The hook runs only when point reaches the window boundary (i.e. when
 `window-point' changes).  This hook can also be used to specify modes to
 disable temporarily during off-window scrolling.  Each function will be
 called with a single argument: -1 when scrolling starts, and 1 when it
-ends (see `ultra-scroll-leave--restore-time' for the timing of
+ends (see `ultra-scroll-restore-time' for the timing of
 this).
 
 If a member of this hook is a symbol ending in \"-mode\", the associated
@@ -111,7 +111,7 @@ and on during scroll only if they are already active."
   :type 'hook
   :group 'scrolling)
 
-(defcustom ultra-scroll-leave--restore-time 0.25
+(defcustom ultra-scroll-restore-time 0.25
   "Time in sec after scrolling ends to restore cursor, etc.
 After scrolling begins and point leaves the initial window view,
 `ultra-scroll' can optionally perform a number of different \"leave\"
@@ -136,8 +136,8 @@ functions.  These include:
 (defvar-local ultra-scroll--leave-restore-functions nil)
 
 (defun ultra-scroll--leave-restore (buf)
-  "Restore BUF after scrolling outside the initial window view.
-See `ultra-scroll-leave--restore-time' for details."
+  "Restore BUF after scrolling point outside the initial window view.
+See `ultra-scroll-restore-time' for details."
   (when (buffer-live-p buf)
     (with-current-buffer buf
       (run-hook-with-args 'ultra-scroll--leave-restore-functions 1)
@@ -154,33 +154,42 @@ See `ultra-scroll-leave--restore-time' for details."
   "Perform any configured leave actions in WINDOW if appropriate.
 Leave actions happen only when the original window point has
 changed (i.e. point has left the initial window view during scroll).
-See `ultra-scroll-leave--restore-time' for details on the available
+See `ultra-scroll-restore-time' for details on the available
 actions."
   (if ultra-scroll--leave--timer	; leave actions have already run
       (timer-set-time ultra-scroll--leave--timer ; reschedule timer
 		      (timer-relative-time
-		       nil ultra-scroll-leave--restore-time))
+		       nil ultra-scroll-restore-time))
     (unless (eq (window-point window)	; not yet at window boundary
 		ultra-scroll--leave-window-point-start)
       (setq ultra-scroll--leave--timer
-	    (run-at-time ultra-scroll-leave--restore-time nil
+	    (run-at-time ultra-scroll-restore-time nil
 			 #'ultra-scroll--leave-restore
 			 (window-buffer window)))
       
       ;; Cursor hiding
       (when ultra-scroll-hide-cursor
-	(push (cond
-	       ((fboundp #'window-cursor-type)
-		(let ((orig (window-cursor-type window)))
-		  (lambda (_v) (set-window-cursor-type window orig))))
+	(push
+	 (cond
+	  ((fboundp 'window-cursor-type)
+	   (let ((orig (window-cursor-type window)))
+	     (lambda (_v)
+	       (set-window-cursor-type
+		window
+		(or (when-let
+			((pending-type
+			  (window-parameter window 'pending-cursor-type)))
+		      (set-window-parameter window 'pending-cursor-type nil)
+		      pending-type)
+		    orig)))))
 	       
-	       ((local-variable-p 'cursor-type)
-		(let ((orig cursor-type))
-		  (lambda (_v) (setq-local cursor-type orig))))
+	  ((local-variable-p 'cursor-type)
+	   (let ((orig cursor-type))
+	     (lambda (_v) (setq-local cursor-type orig))))
 		 
-	       (t (lambda (_v) (kill-local-variable 'cursor-type))))
-	      ultra-scroll--leave-restore-functions)
-	(if (fboundp #'set-window-cursor-type)
+	  (t (lambda (_v) (kill-local-variable 'cursor-type))))
+	 ultra-scroll--leave-restore-functions)
+	(if (fboundp 'set-window-cursor-type)
 	    (set-window-cursor-type window nil)
 	  (setq-local cursor-type nil)))
 

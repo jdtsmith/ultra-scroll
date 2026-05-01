@@ -4,9 +4,12 @@
 
 * DEVELOPMENT
 
-- Use ~window-cursor-type~ where available during cursor hiding, to
-  target hiding only to the window being scrolled (e.g. if the same
-  buffer is visible in multiple windows).
+- Use ~window-cursor-type~ where available during cursor hiding (instead
+  of the buffer-local equivalent), to target hiding only to the window
+  being scrolled.  This means the other window's cursor remains
+  visible if the buffer is visible in multiple windows.
+- Corrected variable name for ~ultra-scroll-restore-time~ and associated
+  docs.
 
 * v0.6.0 (2026-03-25)
 

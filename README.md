@@ -127,15 +127,15 @@ To reduce the likelihood of garbage collection during scroll, which can
 introduce slight pauses, the value of `gc-cons-percentage` is
 temporarily increased, and reset during idle time. The defaults should
 work well for most situations, but if necessary, can be configured using
-`ultra-scroll-gc-percentage` and `ultra-scroll-gc-idle-time`.
+`ultra-scroll-gc-percentage` and `ultra-scroll-idle-time`.
 
 ### Leave functions
 
 When point leaves the initial window bounds during scrolling,
 `ultra-scroll` can perform various helpful functions, restoring the
 state after scrolling ends. The custom variable
-`ultra-scroll-restore-time` can be used to configure the delay time for
-restoring state.
+`ultra-scroll-leave-restore-time` can be used to configure the delay
+time for restoring state.
 
 1.  Hiding cursor during scroll
 
