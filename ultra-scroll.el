@@ -162,26 +162,23 @@ actions."
 		       nil ultra-scroll-restore-time))
     (unless (eq (window-point window)	; not yet at window boundary
 		ultra-scroll--leave-window-point-start)
-      (setq ultra-scroll--leave--timer
-	    (run-at-time ultra-scroll-restore-time nil
-			 #'ultra-scroll--leave-restore
-			 (window-buffer window)))
-      
-      ;; Cursor hiding
+      ;; Schedule cursor un-hiding
       (when ultra-scroll-hide-cursor
 	(push
 	 (cond
 	  ((fboundp 'window-cursor-type)
 	   (let ((orig (window-cursor-type window)))
 	     (lambda (_v)
-	       (set-window-cursor-type
-		window
-		(or (when-let
-			((pending-type
-			  (window-parameter window 'pending-cursor-type)))
-		      (set-window-parameter window 'pending-cursor-type nil)
-		      pending-type)
-		    orig)))))
+	       ;; Guard against multiple state switches per cursor leave
+	       (unless (and (null orig) (window-cursor-type window))
+		 (set-window-cursor-type
+		  window
+		  (or (when-let
+			  ((pending-type
+			    (window-parameter window 'pending-cursor-type)))
+			(set-window-parameter window 'pending-cursor-type nil)
+			pending-type)
+		      orig))))))
 	       
 	  ((local-variable-p 'cursor-type)
 	   (let ((orig cursor-type))
@@ -189,6 +186,7 @@ actions."
 		 
 	  (t (lambda (_v) (kill-local-variable 'cursor-type))))
 	 ultra-scroll--leave-restore-functions)
+
 	(if (fboundp 'set-window-cursor-type)
 	    (set-window-cursor-type window nil)
 	  (setq-local cursor-type nil)))
@@ -203,7 +201,7 @@ actions."
 		  (pos (window-parameter window 'ultra-scroll--start-pos)))
 	(push-mark pos 'nomsg)
 	(set-window-parameter window 'ultra-scroll--start-pos nil))
-    
+
       ;; Hide functions
       (run-hook-wrapped
        'ultra-scroll-hide-functions
@@ -212,8 +210,14 @@ actions."
 		   (not (string-suffix-p "-mode" (symbol-name fun)))
 		   (and (boundp fun) (symbol-value fun)))
 	   (push fun ultra-scroll--leave-restore-functions) ; schedule reenable
-	   (funcall fun -1))				     ; disable
-	 nil)))))
+	   (funcall fun -1))				    ; disable
+	 nil))
+
+      ;; Schedule timer
+      (setq ultra-scroll--leave--timer
+	    (run-at-time ultra-scroll-restore-time nil
+			 #'ultra-scroll--leave-restore
+			 (window-buffer window))))))
 
 ;;;; Other scroll begin/end config actions
 (defvar ultra-scroll--gc-percentage-orig nil)
