@@ -2,6 +2,11 @@
 #+author: J.D. Smith
 #+language: en
 
+
+* v0.6.2 (2026-05-15)
+- Guard against a stuck-invisible cursor for modes which rapidly
+  change buffer in the window (even temporarily).
+
 * v0.6.1 (2026-05-01)
 
 - Use ~window-cursor-type~ where available during cursor hiding (instead
