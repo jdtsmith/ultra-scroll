@@ -217,14 +217,18 @@ actions."
 
 ;;;; Other scroll begin/end config actions
 (defvar ultra-scroll--gc-percentage-orig nil)
-(defvar ultra-scroll--scroll-conservatively-orig nil)
+;; Buffer-local: `scroll-conservatively' can be set buffer-locally (e.g. some
+;; terminal modes pin it >=100), so the saved value must be tracked per-buffer.
+;; nil means "this buffer's value was not raised", so do not restore.
+(defvar-local ultra-scroll--scroll-conservatively-orig nil)
 (defvar ultra-scroll--timer nil)
 (defun ultra-scroll--end-scroll ()
   "Reset GC variable and scroll settings during idle time."
   (when ultra-scroll--gc-percentage-orig
     (setq gc-cons-percentage ultra-scroll--gc-percentage-orig))
-  (when (< ultra-scroll--scroll-conservatively-orig 100)
-    (setq scroll-conservatively ultra-scroll--scroll-conservatively-orig))
+  (when ultra-scroll--scroll-conservatively-orig
+    (setq scroll-conservatively ultra-scroll--scroll-conservatively-orig
+	  ultra-scroll--scroll-conservatively-orig nil))
   (setq ultra-scroll--timer nil))
 
 (defsubst ultra-scroll--prepare-to-scroll (&optional window)
@@ -542,8 +546,9 @@ your system and hardware provide."
     ;; don't need to do so for scrolling, but a bug in half-visible
     ;; cursors lead to 150-400x slowdown in redisplay; see #32.
     (setq-default make-cursor-line-fully-visible nil)
-    (setq ultra-scroll--gc-percentage-orig gc-cons-percentage
-	  ultra-scroll--scroll-conservatively-orig scroll-conservatively))
+    ;; `ultra-scroll--scroll-conservatively-orig' is saved per-buffer at scroll
+    ;; start (see `ultra-scroll--prepare-to-scroll'); nothing to seed here.
+    (setq ultra-scroll--gc-percentage-orig gc-cons-percentage))
    (t
     (define-key pixel-scroll-precision-mode-map [remap pixel-scroll-precision] nil)
     (setq pixel-scroll-precision-use-momentum
