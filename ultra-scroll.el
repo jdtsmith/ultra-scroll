@@ -30,7 +30,7 @@
 ;; past images or other content taller than the window without issue.
 ;;
 ;; The strongly recommended scroll settings are:
-;; 
+;;
 ;;  scroll-margin=0
 ;;
 ;; See also `pixel-scroll-precision-mode' in pixel-scroll.el.
@@ -41,6 +41,7 @@
 (require 'pixel-scroll)
 (require 'mwheel)
 (require 'timer)
+(require 'seq)
 
 ;;;; Customize
 (defcustom ultra-scroll-mac-multiplier 1.
@@ -170,16 +171,16 @@ actions."
 	   (let ((orig (window-cursor-type window)))
 	     (lambda (_v)
 	       (set-window-cursor-type window
-		(or (when-let ((pending-type (window-parameter
-					      window 'pending-cursor-type)))
+		(or (when-let* ((pending-type (window-parameter
+					       window 'pending-cursor-type)))
 		      (set-window-parameter window 'pending-cursor-type nil)
 		      pending-type)
 		    orig)))))
-	       
+
 	  ((local-variable-p 'cursor-type)
 	   (let ((orig cursor-type))
 	     (lambda (_v) (setq-local cursor-type orig))))
-		 
+
 	  (t (lambda (_v) (kill-local-variable 'cursor-type))))
 	 ultra-scroll--leave-restore-functions)
 
@@ -335,7 +336,7 @@ DELTA should be less than the window's height."
       (unless (eq start win-start)
 	(set-window-start nil start (not (zerop delta)))))
     (when (>= delta 0) (set-window-vscroll nil delta t t))
-    
+
     ;; Position point to avoid recentering, moving up one line from
     ;; the bottom, if necessary.  "Jumbo" lines (taller than the
     ;; window height, usually due to images) must be handled
@@ -454,7 +455,7 @@ their PIXEL-DELTA values to see if they differ."
       (when (memq (event-basic-type ev) '(wheel-up wheel-down))
 	(unless tm (setq tm (current-time)))
 	(message "Detected %2d/%2d wheel event%s" cnt max-cnt (if (> cnt 1) "s" ""))
-	(cl-incf cnt)
+	(setq cnt (1+ cnt))
 	(if (featurep 'mac-win)
 	    (let ((plist (nth 3 ev)))
 	      (when (null plist)
@@ -481,12 +482,12 @@ their PIXEL-DELTA values to see if they differ."
 	(insert " *** WARNING: Emacs on Linux/X11 must be compiled --with-xinput2\n"))
       (insert (format " ** %s scroll events%s detected in %0.2fs (%0.1f events/s)\n" cnt
 		      (if mac-basic " [Mac basic mouse]" "") tm (/ (float cnt) tm)))
-      (if (cl-every (lambda (x) (= (abs x) (abs (car deltas)))) deltas)
+      (if (seq-every-p (lambda (x) (= (abs x) (abs (car deltas)))) deltas)
 	  (insert (format " *** WARNING, all pixel scroll values == %0.2f " (car deltas))
 		  "No real pixel scroll data stream?\n"
 		  " ** (try again, or use pixel-scroll-precision instead)\n")
 	(let* ((deltas (mapcar #'abs deltas))
-	       (mean (/ (cl-reduce #'+ deltas ) max-cnt))
+	       (mean (/ (apply #'+ deltas) max-cnt))
 	       (min (apply #'min deltas))
 	       (max (apply #'max deltas)))
 	  (insert (format " *** %s pixel scroll data: %0.1f to %0.1f (%0.2f mean)\n"
@@ -536,4 +537,3 @@ your system and hardware provide."
 
 (provide 'ultra-scroll)
 ;;; ultra-scroll.el ends here
-
