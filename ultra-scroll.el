@@ -29,10 +29,6 @@
 ;; overview capabilities of that port.  On all ports, it can scroll
 ;; past images or other content taller than the window without issue.
 ;;
-;; The strongly recommended scroll settings are:
-;;
-;;  scroll-margin=0
-;;
 ;; See also `pixel-scroll-precision-mode' in pixel-scroll.el.
 
 ;;; Code:
@@ -219,13 +215,18 @@ actions."
 ;;;; Other scroll begin/end config actions
 (defvar ultra-scroll--gc-percentage-orig nil)
 (defvar ultra-scroll--scroll-conservatively-orig nil)
+(defvar ultra-scroll--scroll-margin-orig nil)
 (defvar ultra-scroll--timer nil)
 (defun ultra-scroll--end-scroll ()
   "Reset GC variable and scroll settings during idle time."
   (when ultra-scroll--gc-percentage-orig
     (setq gc-cons-percentage ultra-scroll--gc-percentage-orig))
-  (when (< ultra-scroll--scroll-conservatively-orig 100)
+  (when (and ultra-scroll--scroll-conservatively-orig
+	     (< ultra-scroll--scroll-conservatively-orig 100))
     (setq scroll-conservatively ultra-scroll--scroll-conservatively-orig))
+  (when (and ultra-scroll--scroll-margin-orig
+	     (> ultra-scroll--scroll-margin-orig 0))
+    (setq scroll-margin ultra-scroll--scroll-margin-orig))
   (setq ultra-scroll--timer nil))
 
 (defsubst ultra-scroll--prepare-to-scroll (&optional window)
@@ -268,7 +269,9 @@ temporarily."
     (when (< scroll-conservatively 100)
       (setq ultra-scroll--scroll-conservatively-orig scroll-conservatively
 	    scroll-conservatively 101))
-
+    (when (> scroll-margin 0)
+      (setq ultra-scroll--scroll-margin-orig scroll-margin
+	    scroll-margin 0))
     (setq ultra-scroll--timer
 	  (run-with-idle-timer ultra-scroll-idle-time nil
 			       #'ultra-scroll--end-scroll))))
