@@ -401,43 +401,28 @@ EVENT is a scrolling event."
 (declare-function mac-forward-wheel-event "mac-win")
 (defun ultra-scroll-mac (event &optional arg)
   "Smooth scroll EVENT for emacs-mac.
-EVENT and optional ARG are passed on to `mwheel-scroll', for any
-events not handled here.  If swipe-tracking is enabled for
-swipe-between-pages at the OS level, left-/right-swipe events
-will be replayed for left/right touch ends."
+EVENT and optional ARG are passed on to `mwheel-scroll', for any events
+not handled here, or if `mac-mouse-wheel-smooth-scroll' is nil.  To be
+bound to wheel/up-down events only."
   (interactive "e")
-  (let ((ev-type (event-basic-type event))
-	(plist (nth 3 event)))
-    (if (not (memq ev-type '(wheel-up wheel-down)))
-	(when (memq ev-type '(wheel-left wheel-right))
-	  (if mouse-wheel-tilt-scroll
-	      (mac-forward-wheel-event t 'mwheel-scroll event arg)
-	    (when (and ;; "Swipe between pages" enabled.
-		   (plist-get plist :swipe-tracking-from-scroll-events-enabled-p)
-		   (eq (plist-get plist :momentum-phase) 'began))
-	      ;; Post a swipe event when left/right momentum phase begins
-	      (push (cons (event-convert-list
-			   (nconc (delq 'click
-					(delq 'double
-					      (delq 'triple
-						    (event-modifiers event))))
-				  (if (eq (event-basic-type event) 'wheel-left)
-				      '(swipe-left) '(swipe-right))))
-			  (cdr event))
-		    unread-command-events))))
-      ;;  Note: emacs-mac encodes all scrolling information in the PLIST, as follows:
-      ;;    trackpads:
-      ;;      - `:scrolling-delta-x' and `:scrolling-delta-y' are set
-      ;;        to pixel scroll amounts.
-      ;;      - `:phase' is set to `began' on first scroll, then `changed'.
-      ;;      - During momentum scroll, `:momentum-phase' is set to
-      ;;        `began' then `changed', while `:phase' is `none'.
-      ;;    some regular wheeled mice:
-      ;;      - `:delta-x' and `:delta-y' are set to floating
-      ;;        fractional line scroll amounts.
-      ;;      - `:phase' is set to `began' on first scroll, then `changed'.
-      ;;      - `:momentum-phase' is always `none'.
-      (if-let* ((scroll-delta (plist-get plist :scrolling-delta-y)))
+  (let ((ev-type (event-basic-type event)))
+    (when (memq ev-type '(wheel-up wheel-down))
+      (if-let* ((_ mac-mouse-wheel-smooth-scroll)
+		(plist (nth 3 event))
+		(scroll-delta (plist-get plist :scrolling-delta-y)))
+	  ;;  Note: emacs-mac encodes all scrolling information in the
+	  ;;    event's PLIST, as follows:
+	  ;;  trackpads:
+	  ;;    - `:scrolling-delta-x' and `:scrolling-delta-y' are set
+	  ;;      to pixel scroll amounts.
+	  ;;    - `:phase' is set to `began' on first scroll, then `changed'.
+	  ;;    - During momentum scroll, `:momentum-phase' is set to
+	  ;;      `began' then `changed', while `:phase' is `none'.
+	  ;;  some regular wheeled mice:
+	  ;;    - `:delta-x' and `:delta-y' are set to floating
+	  ;;      fractional line scroll amounts.
+	  ;;    - `:phase' is set to `began' on first scroll, then `changed'.
+	  ;;    - `:momentum-phase' is always `none'.
 	  (let ((window (mwheel-event-window event))
 		(delta (or scroll-delta
 			   ;; regular non-touch scroll: fraction of a line
