@@ -136,7 +136,12 @@ functions.  These include:
 WIN is the window which was originally showing BUF.  See
 `ultra-scroll-restore-time' for details."
   (set-window-parameter win 'ultra-scroll--leave-timer nil)
-  (when (buffer-live-p buf)
+  (when-let* ((_ (window-live-p win))
+	      (lrfns (window-parameter win 'ultra-scroll--leave-restore-functions)))
+    (dolist (f lrfns) (funcall f win))
+    (set-window-parameter win 'ultra-scroll--leave-restore-functions nil))
+  (when (and (buffer-live-p buf)
+	     (buffer-local-value 'ultra-scroll--leave-restore-functions buf))
     (with-current-buffer buf
       (run-hook-with-args 'ultra-scroll--leave-restore-functions 1)
       (kill-local-variable 'ultra-scroll--leave-restore-functions)
@@ -161,25 +166,30 @@ actions."
 		ultra-scroll--leave-window-point-start)
       ;; Schedule cursor un-hiding
       (when ultra-scroll-hide-cursor
-	(push
-	 (cond
-	  ((fboundp 'window-cursor-type)
-	   (let ((orig (window-cursor-type window)))
-	     (lambda (_v)
-	       (set-window-cursor-type window
-		(or (when-let* ((pending-type (window-parameter
-					       window 'pending-cursor-type)))
-		      (set-window-parameter window 'pending-cursor-type nil)
+	(cond
+	 ((fboundp 'set-window-cursor-type)
+	  (let ((orig (window-cursor-type window)))
+	    (push
+	     (lambda (win)
+	       (set-window-cursor-type
+		win
+		(or (when-let*
+			((pending-type (window-parameter win 'pending-cursor-type)))
+		      (set-window-parameter win 'pending-cursor-type nil)
 		      pending-type)
-		    orig)))))
+		    orig)))
+	     (window-parameter window 'ultra-scroll--leave-restore-functions))))
 
-	  ((local-variable-p 'cursor-type)
-	   (let ((orig cursor-type))
-	     (lambda (_v) (setq-local cursor-type orig))))
+	 ((local-variable-p 'cursor-type)
+	  (let ((orig cursor-type))
+	    (push (lambda (_v) (setq-local cursor-type orig))
+		  ultra-scroll--leave-restore-functions)))
 
-	  (t (lambda (_v) (kill-local-variable 'cursor-type))))
-	 ultra-scroll--leave-restore-functions)
+	 (t (push (lambda (_v) (kill-local-variable 'cursor-type))
+		  ultra-scroll--leave-restore-functions)))
 
+	;; We use window-specific cursor hiding when possible, since
+	;; the same buffer may be shown in mulitple windows.
 	(if (fboundp 'set-window-cursor-type)
 	    (set-window-cursor-type window nil)
 	  (setq-local cursor-type nil)))
