@@ -2,6 +2,11 @@
 #+author: J.D. Smith
 #+language: en
 
+* v0.7.0 (2026-08-02)
+- Non-zero scroll-margin is now supported (set to zero and restore
+  after scrolling completes).
+- Handle killed buffer or window correctly for restoring cursor type,
+  etc.
 
 * v0.6.2 (2026-05-15)
 - Guard against a stuck-invisible cursor for modes which rapidly
