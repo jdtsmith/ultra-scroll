@@ -528,8 +528,6 @@ your system and hardware provide."
   (pixel-scroll-precision-mode (if ultra-scroll-mode 1 -1)) ;; reuse
   (cond
    (ultra-scroll-mode
-    (unless (= scroll-margin 0)
-      (warn "ultra-scroll: scroll-margin = 0 is required for glitch-free smooth scrolling"))
     (when (and (featurep 'x) (not (featurep 'xinput2)))
       (warn "ultra-scroll: Emacs on Linux/X11 must be compiled --with-xinput2"))
     (define-key pixel-scroll-precision-mode-map [remap pixel-scroll-precision]
