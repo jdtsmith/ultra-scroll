@@ -2,6 +2,9 @@
 #+author: J.D. Smith
 #+language: en
 
+* v0.7.1 (2026-08-10)
+- Remove spurious scroll-margin warning.
+
 * v0.7.0 (2026-08-02)
 - Non-zero scroll-margin is now supported (set to zero and restore
   after scrolling completes).
