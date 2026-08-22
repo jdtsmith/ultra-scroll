@@ -39,6 +39,10 @@ For systems which do /not/ provide normal pixel scroll data, you can try the bui
 *Your Help Needed!*  While ~ultra-scroll~ works out of the box for most people, it's impossible to test all combinations of systems and hardware, so please take a moment to [[../../discussions][report your smooth-scrolling experiences]].
 #+end_important
 
+#+begin_note
+On Linux, getting proper pixel-level wheel mouse input can be finicky, depending on graphics toolkit and input manager in use.  See [[https://github.com/jdtsmith/ultra-scroll/discussions/52#discussioncomment-18111123][this comment]] for tips.
+#+end_note
+
 ** Installation
 
 ~ultra-scroll~ is in MELPA.  Starting from Emacs 30, you can also use the new ~:vc~ keyword to download directly from this repository.  Configuration is then simple:
@@ -94,7 +98,7 @@ It can be convenient to remember the position where scrolling commenced.  By def
 
 This allows you to scroll away to read something, then =C-x C-x=  (or =C-u C-x C-x= if you have ~transient-mark-mode~ enabled), or =C-u SPC= to quickly pop back to your initial position.  I also recommend ~consult-mark~ as a quick way to browse through your marks.
 
-**** Other hide general hide functions
+**** Other general hide functions
 
 In addition to the cursor, it is sometimes useful to temporarily disable other modes during scrolling, for example to hide certain decorations or prevent expensive calculations.  The special hook variable ~ultra-scroll-hide-functions~ can be used for this, e.g.:
 

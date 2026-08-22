@@ -77,6 +77,12 @@ interpolation) instead.
 > hardware, so please take a moment to [report your smooth-scrolling
 > experiences](../../discussions).
 
+> [!NOTE]
+> On Linux, getting proper pixel-level wheel mouse input can be finicky,
+> depending on graphics toolkit and input manager in use. See [this
+> comment](https://github.com/jdtsmith/ultra-scroll/discussions/52#discussioncomment-18111123)
+> for tips.
+
 ## Installation
 
 `ultra-scroll` is in MELPA. Starting from Emacs 30, you can also use the
@@ -164,7 +170,7 @@ time for restoring state.
     recommend `consult-mark` as a quick way to browse through your
     marks.
 
-4.  Other hide general hide functions
+4.  Other general hide functions
 
     In addition to the cursor, it is sometimes useful to temporarily
     disable other modes during scrolling, for example to hide certain
@@ -461,7 +467,7 @@ with various buffer and window sizes[^2].
     time, so that all the other emacs commands that occur when new
     content is brought into view (font-lock) can run without causing
     scroll lag, for all your different modes. **Faster is better**: 3ms
-    or less[^2] in a light buffer would be *ideal*.
+    or less[^3] in a light buffer would be *ideal*.
 4.  Building `--with-native-comp` is *essential* for ultra-smooth
     scrolling. It increases the speed of each individual scroll command
     by **\>3x**, which is important since these commands are called so
@@ -485,6 +491,14 @@ with various buffer and window sizes[^2].
 [^1]: Formerly `ultra-scroll-mac`.
 
 [^2]: To try this yourself, `M-x elp-instrument-function` on both
+    `ultra-scroll-up/down`, scroll around (both directions) in a big
+    buffer with a large window, then `M-x elp-results`. The last column
+    gives average time in seconds. Less than 0.003s (i.e. 3ms) is ideal,
+    8ms is still perfectly usable, 15ms you'll feel a bit, 50ms will be
+    very frustrating. `scroll-down` is always faster than `scroll-up`
+    due to an asymmetry in Emacs' `vscroll` buffer.
+
+[^3]: To try this yourself, `M-x elp-instrument-function` on both
     `ultra-scroll-up/down`, scroll around (both directions) in a big
     buffer with a large window, then `M-x elp-results`. The last column
     gives average time in seconds. Less than 0.003s (i.e. 3ms) is ideal,
